@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-6">
+        <div class="jumbotron bg-light p-5 rounded">
+            <h1 class="display-4">Welcome to Word Finder!</h1>
+            <p class="lead">Challenge your vocabulary skills with our exciting word search game. Find hidden words in a grid of letters and climb the leaderboard!</p>
+            
+            {% if not current_user.is_authenticated %}
+            <div class="mt-4">
+                <a href="/register" class="btn btn-primary btn-lg me-2">
+                    <i class="fas fa-user-plus"></i> Sign Up Free
+                </a>
+                <a href="/login" class="btn btn-outline-primary btn-lg">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </a>
+            </div>
+            {% else %}
+            <div class="mt-4">
+                <a href="/game" class="btn btn-success btn-lg">
+                    <i class="fas fa-play"></i> Play Now
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <i class="fas fa-search fa-3x text-primary mb-3"></i>
+                        <h5 class="card-title">Find Words</h5>
+                        <p class="card-text">Discover hidden words in challenging letter grids.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 mb-4">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <i class="fas fa-trophy fa-3x text-warning mb-3"></i>
+                        <h5 class="card-title">Compete</h5>
+                        <p class="card-text">Climb the leaderboard and earn achievements.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 mb-4">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <i class="fas fa-brain fa-3x text-info mb-3"></i>
+                        <h5 class="card-title">Learn</h5>
+                        <p class="card-text">Expand your vocabulary with word definitions.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 mb-4">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <i class="fas fa-users fa-3x text-success mb-3"></i>
+                        <h5 class="card-title">Community</h5>
+                        <p class="card-text">Join thousands of word game enthusiasts.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Game Statistics -->
+<div class="row mt-5">
+    <div class="col-12">
+        <h3 class="text-center mb-4">Game Features</h3>
+    </div>
+    
+    <div class="col-md-4 text-center">
+        <h2 class="text-primary" id="totalWords">0</h2>
+        <p>Words in Database</p>
+    </div>
+    
+    <div class="col-md-4 text-center">
+        <h2 class="text-success" id="totalGames">0</h2>
+        <p>Games Played</p>
+    </div>
+    
+    <div class="col-md-4 text-center">
+        <h2 class="text-warning" id="totalUsers">0</h2>
+        <p>Active Players</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Load home page statistics
+    async function loadStatistics() {
+        try {
+            // Load word stats
+            const wordStats = await apiCall('/words/stats');
+            document.getElementById('totalWords').textContent = wordStats.total_words.toLocaleString();
+            
+            // Load game stats (you might need to create this endpoint)
+            const gameStats = await apiCall('/game/stats');
+            document.getElementById('totalGames').textContent = gameStats.total_games.toLocaleString();
+            
+            // Load user stats (you might need to create this endpoint)
+            const userStats = await apiCall('/admin/dashboard');
+            document.getElementById('totalUsers').textContent = userStats.users.total.toLocaleString();
+            
+        } catch (error) {
+            console.error('Error loading statistics:', error);
+        }
+    }
+    
+    // Load statistics when page loads
+    document.addEventListener('DOMContentLoaded', loadStatistics);
+</script>
+{% endblock %}

@@ -1,0 +1,332 @@
+{% extends "base.html" %}
+
+{% block title %}Play Game{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Game Controls -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Word Finder Game</h5>
+                <div>
+                    <span class="badge bg-primary" id="timer">00:00</span>
+                    <span class="badge bg-success ms-2" id="score">Score: 0</span>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if not current_user.is_authenticated %}
+                <div class="alert alert-warning">
+                    <a href="/login">Login</a> to save your progress and compete on the leaderboard!
+                </div>
+                {% endif %}
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Select Difficulty:</label>
+                        <select class="form-select" id="difficulty">
+                            <option value="1">Easy (8x8)</option>
+                            <option value="2">Medium (10x10)</option>
+                            <option value="3">Hard (12x12)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <button class="btn btn-primary w-100" onclick="startGame()">
+                            <i class="fas fa-play"></i> Start New Game
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Grid -->
+        <div class="card">
+            <div class="card-body">
+                <div id="gameArea" class="text-center" style="display: none;">
+                    <div id="wordGrid" class="mb-3"></div>
+
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="wordInput" placeholder="Enter word...">
+                                <button class="btn btn-success" onclick="submitWord()">
+                                    <i class="fas fa-check"></i> Submit
+                                </button>
+                                <button class="btn btn-info" onclick="getHint()">
+                                    <i class="fas fa-lightbulb"></i> Hint
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-warning w-100" onclick="endGame()">
+                                <i class="fas fa-stop"></i> End Game
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="waitingArea" class="text-center py-5">
+                    <i class="fas fa-gamepad fa-4x text-muted mb-3"></i>
+                    <h4>Ready to Play?</h4>
+                    <p>Select a difficulty level and click "Start New Game" to begin!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Word List -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Words to Find</h5>
+            </div>
+            <div class="card-body">
+                <div id="wordList" class="d-flex flex-wrap gap-2"></div>
+            </div>
+        </div>
+
+        <!-- Game Stats -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Game Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div id="gameStats">
+                    <p class="text-center text-muted">Start a game to see statistics</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/game.js') }}"></script>
+<script>
+    let currentGame = null;
+    let timerInterval = null;
+    let seconds = 0;
+
+    function startGame() {
+        const difficulty = document.getElementById('difficulty').value;
+        console.log('Starting game with difficulty:', difficulty);
+
+        apiCall('/game/start', {
+            method: 'POST',
+            body: JSON.stringify({ level_id: parseInt(difficulty) })
+        })
+        .then(gameData => {
+            console.log('Game started successfully:', gameData);
+            currentGame = gameData;
+            displayGameGrid(gameData.grid);
+            displayWordList(gameData.words);
+            startTimer();
+
+            document.getElementById('gameArea').style.display = 'block';
+            document.getElementById('waitingArea').style.display = 'none';
+        })
+        .catch(error => {
+            console.error('Game start failed:', error);
+            showAlert('Failed to start game: ' + error.message, 'danger');
+        });
+    }
+
+    function displayGameGrid(grid) {
+        const gridContainer = document.getElementById('wordGrid');
+        gridContainer.innerHTML = '';
+
+        grid.forEach(row => {
+            const rowDiv = document.createElement('div');
+            rowDiv.className = 'grid-row';
+
+            row.forEach(cell => {
+                const cellDiv = document.createElement('div');
+                cellDiv.className = 'grid-cell';
+                cellDiv.textContent = cell;
+                rowDiv.appendChild(cellDiv);
+            });
+
+            gridContainer.appendChild(rowDiv);
+        });
+    }
+
+    function displayWordList(words) {
+        const wordList = document.getElementById('wordList');
+        wordList.innerHTML = '';
+
+        const info = document.createElement('div');
+        info.className = 'text-muted small';
+        info.textContent = `Find ${words.length} hidden words!`;
+        wordList.appendChild(info);
+
+    }
+
+    function startTimer() {
+        seconds = 0;
+        updateTimer();
+
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            seconds++;
+            updateTimer();
+        }, 1000);
+    }
+
+    function updateTimer() {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        document.getElementById('timer').textContent =
+            `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
+
+    function submitWord() {
+        const wordInput = document.getElementById('wordInput');
+        const word = wordInput.value.trim().toUpperCase();
+
+        if (!word){
+            showAlert('Incorrect Entry', "Please input a word before submitting", 'error')
+            return;
+        }
+
+        apiCall('/game/validate', {
+            method: 'POST',
+            body: JSON.stringify({
+                session_id: currentGame.session_id,
+                word: word
+            })
+        })
+        .then(result => {
+            if (result.valid && !result.already_found) {
+                // Mark word as found
+                const wordElement = document.getElementById(`word-${word}`);
+                if (wordElement) {
+                    wordElement.className = 'badge bg-success';
+                }
+
+                // Update score
+                document.getElementById('score').textContent = `Score: ${result.found_count * 100}`;
+                const wordSpan = document.createElement('span');
+                wordSpan.className = 'badge bg-success me-2 mb-2';
+                wordSpan.textContent = word;
+                wordSpan.style.fontSize = '1.1rem';
+                wordList.appendChild(wordSpan);
+
+                // Clear input
+                wordInput.value = '';
+
+                // Check if all words found
+                if (result.found_count === result.total_words) {
+                    endGame();
+                }
+            } else if (result.already_found) {
+                showAlert('Word already found!', 'warning');
+            } else {
+                showAlert('Word not found in grid!', 'danger');
+            }
+        })
+        .catch(error => {
+            showAlert(error.message, 'danger');
+        });
+    }
+
+    function getHint() {
+        if (!currentGame) return;
+
+        apiCall('/game/hint', {
+            method: 'POST',
+            body: JSON.stringify({
+                session_id: currentGame.session_id
+            })
+        })
+        .then(hint => {
+            showAlert(`Hint: ${hint.hint}`, 'info');
+        })
+        .catch(error => {
+            showAlert(error.message, 'danger');
+        });
+    }
+
+    function endGame() {
+        if (!currentGame) return;
+
+        if (timerInterval) clearInterval(timerInterval);
+
+        apiCall('/game/end', {
+            method: 'POST',
+            body: JSON.stringify({
+                session_id: currentGame.session_id
+            })
+        })
+        .then(result => {
+            showAlert(`Game completed! Your score: ${result.score}`, 'success');
+
+            // Reset game state
+            currentGame = null;
+            document.getElementById('gameArea').style.display = 'none';
+            document.getElementById('waitingArea').style.display = 'block';
+            document.getElementById('score').textContent = 'Score: 0';
+            document.getElementById('timer').textContent = '00:00';
+        })
+        .catch(error => {
+            showAlert(error.message, 'danger');
+        });
+    }
+
+    // Allow Enter key to submit word
+    document.getElementById('wordInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            submitWord();
+        }
+    });
+</script>
+
+<style>
+.grid-row {
+    display: flex;
+    justify-content: center;
+}
+
+#wordGrid {
+    display: inline-block;
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    margin: 20px auto;
+}
+
+
+.grid-cell {
+    width: 45px;
+    height: 45px;
+    border: 2px solid #444;
+    margin: 3px;
+    font-size: 1.4rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border-radius: 6px;
+    text-transform: uppercase;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: all 0.2s;
+}
+
+.grid-cell:hover {
+    background: #e3f2fd;
+    transform: scale(1.1);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .grid-cell {
+        width: 35px;
+        height: 35px;
+        font-size: 1rem;
+        margin: 2px;
+    }
+}
+
+</style>
+{% endblock %}
