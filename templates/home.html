@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find the Word - Home</title>
+    <link rel="stylesheet" href="../static/css/global.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #f8f8f8;
+            color: #000000;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            padding-top: 80px;
+        }
+
+        /* Navbar */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            border-bottom: 2px solid #000000;
+            padding: 1rem 2rem;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            color: #000000;
+        }
+
+        .navbar-logo-letter {
+            width: 40px;
+            height: 45px;
+            border: 3px solid #000000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 900;
+            background: #ffffff;
+            transition: all 0.3s ease;
+        }
+
+        .navbar-logo:hover .navbar-logo-letter {
+            background: #22c55e;
+            color: #ffffff;
+        }
+
+        .navbar-buttons {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .navbar-btn {
+            padding: 0.75rem 1.5rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            border: 2px solid #000000;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .navbar-btn-primary {
+            background: #000000;
+            color: #ffffff;
+        }
+
+        .navbar-btn-primary:hover {
+            background: #22c55e;
+            border-color: #22c55e;
+        }
+
+        .navbar-btn-secondary {
+            background: #ffffff;
+            color: #000000;
+        }
+
+        .navbar-btn-secondary:hover {
+            background: #000000;
+            color: #ffffff;
+        }
+
+        .mobile-menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+
+        .home-container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            background: #f8f8f8;
+            padding: 5rem 2rem 4rem 2rem;
+            text-align: center;
+        }
+
+        .logo {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .logo-letter {
+            width: 120px;
+            height: 130px;
+            border: 6px solid #000000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 5.5rem;
+            font-weight: 900;
+            background: #ffffff;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .logo-letter:hover {
+            background: #22c55e;
+            color: #ffffff;
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 10px 25px rgba(34, 197, 94, 0.3);
+        }
+
+        .tagline {
+            font-size: 4rem;
+            font-weight: 900;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .tagline .highlight {
+            background: #000000;
+            color: #ffffff;
+            padding: 0.3rem 1rem;
+            display: inline-block;
+            font-size: 4rem;
+        }
+
+        .hero-description {
+            font-size: 1.25rem;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto 2.5rem auto;
+            line-height: 1.6;
+            font-weight: 600;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 1rem 2.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            border: 2px solid #000000;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-primary {
+            background: #000000;
+            color: #ffffff;
+        }
+
+        .btn-primary:hover {
+            background: #ffffff;
+            color: #000000;
+        }
+
+        .btn-secondary {
+            background: #ffffff;
+            color: #000000;
+        }
+
+        .btn-secondary:hover {
+            background: #000000;
+            color: #ffffff;
+        }
+
+        /* Divider */
+        .divider {
+            height: 2px;
+            background: #000000;
+            margin: 0;
+        }
+
+        /* How It Works Section */
+        .how-it-works {
+            background: #ffffff;
+            padding: 5rem 2rem;
+        }
+
+        .section-title {
+            font-size: 4rem;
+            font-weight: 900;
+            text-align: center;
+            margin-bottom: 3rem;
+            text-transform: uppercase;
+        }
+
+        .section-title .highlight {
+            background: #000000;
+            color: #ffffff;
+            padding: 0.2rem 0.8rem;
+            display: inline-block;
+        }
+
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 0 0rem;
+        }
+
+        .step-card {
+            background: #ffffff;
+            border: 3px solid #000000;
+            padding: 1rem 20px;
+            text-align: left;
+            transition: all 0.3s ease;
+            min-height: 320px;
+            border-radius: 20px;
+        }
+
+        .step-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 10px 0px 0px rgba(0, 0, 0, 0.993);
+        }
+
+        .step-number {
+            font-size: 4rem;
+            font-weight: 900;
+            color: #e8e8e8;
+            margin-bottom: 1.5rem;
+        }
+
+        .step-icon {
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            display: block;
+        }
+
+        .step-card h3 {
+            font-size: 25px;
+            font-weight: 900;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+
+        .step-card p {
+            font-size: 1.1rem;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        /* Game Features Section */
+        .game-features {
+            background: #f8f8f8;
+            padding: 5rem 2rem;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .feature-item {
+            background: #ffffff;
+            border-left: 5px solid #000000;
+            padding: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .feature-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature-item h3 {
+            font-size: 1.25rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            margin-bottom: 0.75rem;
+        }
+
+        .feature-item p {
+            font-size: 0.95rem;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        /* Levels Section */
+        .levels-section {
+            background: #ffffff;
+            padding: 5rem 2rem;
+        }
+
+        .levels-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .level-card {
+            background: #ffffff;
+            border: 3px solid #000000;
+            padding: 2.5rem;
+            transition: all 0.3s ease;
+            border-radius: 20px;
+        }
+
+        .level-card:hover {
+            background: #000000;
+            color: #ffffff;
+        }
+
+        .level-card h3 {
+            font-size: 1.75rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            margin-bottom: 1.5rem;
+        }
+
+        .level-card p {
+            font-size: 0.95rem;
+            margin-bottom: 0.75rem;
+            line-height: 1.6;
+        }
+
+        .level-card p strong {
+            font-weight: 900;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            background: #000000;
+            color: #ffffff;
+            padding: 5rem 2rem;
+            text-align: center;
+        }
+
+        .cta-title {
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+        }
+
+        .cta-title .highlight {
+            color: #22c55e;
+        }
+
+        .cta-description {
+            font-size: 1rem;
+            margin-bottom: 2.5rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-button {
+            background: #22c55e;
+            color: #ffffff;
+            padding: 1.25rem 3rem;
+            font-size: 1.1rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .cta-button:hover {
+            background: #1ea34d;
+            transform: scale(1.05);
+        }
+
+        /* Footer */
+        .footer {
+            background: #ffffff;
+            padding: 2rem;
+            text-align: center;
+            border-top: 2px solid #000000;
+        }
+
+        .footer p {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .steps-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1.5rem;
+                padding: 0 1rem;
+            }
+
+            .features-grid,
+            .levels-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding-top: 70px;
+            }
+
+            .navbar {
+                padding: 0.75rem 1rem;
+            }
+
+            .navbar-logo-letter {
+                width: 35px;
+                height: 40px;
+                font-size: 1.25rem;
+                border: 2px solid #000000;
+            }
+
+            .mobile-menu-toggle {
+                display: block;
+            }
+
+            .navbar-buttons {
+                position: fixed;
+                top: 70px;
+                left: 0;
+                right: 0;
+                background: #ffffff;
+                flex-direction: column;
+                padding: 1rem;
+                border-bottom: 2px solid #000000;
+                display: none;
+            }
+
+            .navbar-buttons.active {
+                display: flex;
+            }
+
+            .navbar-btn {
+                width: 100%;
+                text-align: center;
+            }
+
+            .logo-letter {
+                width: 80px;
+                height: 90px;
+                font-size: 3.5rem;
+                border: 4px solid #000000;
+            }
+
+            .tagline {
+                font-size: 2.5rem;
+            }
+
+            .tagline .highlight {
+                font-size: 2.5rem;
+                padding: 0.2rem 0.6rem;
+            }
+
+            .section-title {
+                font-size: 2.5rem;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .steps-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+                padding: 0 1rem;
+            }
+
+            .step-card {
+                min-height: auto;
+                padding: 2rem 1.5rem;
+            }
+
+            .step-number {
+                font-size: 3rem;
+            }
+
+            .step-icon {
+                font-size: 2rem;
+            }
+
+            .step-card h3 {
+                font-size: 1.5rem;
+            }
+
+            .step-card p {
+                font-size: 1rem;
+            }
+
+            .features-grid,
+            .levels-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .feature-item {
+                padding: 1.5rem;
+            }
+
+            .level-card {
+                padding: 2rem;
+            }
+
+            .cta-title {
+                font-size: 2rem;
+            }
+
+            .cta-button {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .logo {
+                gap: 0.3rem;
+            }
+
+            .logo-letter {
+                width: 60px;
+                height: 70px;
+                font-size: 2.5rem;
+                border: 3px solid #000000;
+            }
+
+            .tagline {
+                font-size: 1.75rem;
+            }
+
+            .tagline .highlight {
+                font-size: 1.75rem;
+                padding: 0.2rem 0.5rem;
+            }
+
+            .hero-description {
+                font-size: 0.9rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .btn {
+                padding: 0.875rem 2rem;
+                font-size: 0.9rem;
+            }
+
+            .step-card {
+                padding: 1.5rem 1rem;
+            }
+
+            .step-number {
+                font-size: 2.5rem;
+            }
+
+            .step-card h3 {
+                font-size: 1.25rem;
+            }
+
+            .step-card p {
+                font-size: 0.95rem;
+            }
+
+            .feature-item h3,
+            .level-card h3 {
+                font-size: 1.25rem;
+            }
+
+            .feature-item p,
+            .level-card p {
+                font-size: 0.9rem;
+            }
+
+            .cta-title {
+                font-size: 1.5rem;
+            }
+
+            .cta-description {
+                font-size: 0.9rem;
+            }
+
+            .cta-button {
+                padding: 1rem 2rem;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a href="#" class="navbar-logo">
+            <div class="navbar-logo-letter">F</div>
+            <div class="navbar-logo-letter">I</div>
+            <div class="navbar-logo-letter">N</div>
+            <div class="navbar-logo-letter">D</div>
+        </a>
+        <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+        <div class="navbar-buttons" id="navbarButtons">
+            <a href="signup.html" class="navbar-btn navbar-btn-primary">Get Started</a>
+            <a href="login.html" class="navbar-btn navbar-btn-secondary">Login</a>
+        </div>
+    </nav>
+
+    <div class="home-container">
+        <!-- Hero Section -->
+        <div class="hero-section">
+            <div class="logo">
+                <div class="logo-letter">F</div>
+                <div class="logo-letter">I</div>
+                <div class="logo-letter">N</div>
+                <div class="logo-letter">D</div>
+            </div>
+            <h1 class="tagline">THE <span class="highlight">WORD</span></h1>
+            <p class="hero-description">
+                Challenge your vocabulary. Race against time. Discover hidden words in a grid of letters.
+            </p>
+            <div class="hero-buttons">
+                <a href="game.html" class="btn btn-primary">Start Playing</a>
+                <a href="#how-it-works" class="btn btn-secondary">Learn More</a>
+            </div>
+        </div>
+
+        <!-- Divider -->
+        <div class="divider"></div>
+
+        <!-- How It Works Section -->
+        <div class="how-it-works" id="how-it-works">
+            <h2 class="section-title">HOW IT <span class="highlight">WORKS</span></h2>
+            <div class="steps-grid">
+                <div class="step-card">
+                    <div class="step-number">01</div>
+                    <div class="step-icon">🔍</div>
+                    <h3>Find Words</h3>
+                    <p>Search for hidden words in a grid filled with random letters</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">02</div>
+                    <div class="step-icon">🎯</div>
+                    <h3>Use Strategy</h3>
+                    <p>Words can be horizontal, vertical, or diagonal in any direction</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">03</div>
+                    <div class="step-icon">⏱️</div>
+                    <h3>Beat Time</h3>
+                    <p>Race against the clock to find all words before time runs out</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">04</div>
+                    <div class="step-icon">🏆</div>
+                    <h3>Score Points</h3>
+                    <p>Earn points based on word length and speed of discovery</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Divider -->
+        <div class="divider"></div>
+
+        <!-- Game Features Section -->
+        <div class="game-features">
+            <h2 class="section-title">GAME <span class="highlight">FEATURES</span></h2>
+            <div class="features-grid">
+                <div class="feature-item">
+                    <h3>Dynamic Grid</h3>
+                    <p>Each game generates a unique grid with random letter placement</p>
+                </div>
+                <div class="feature-item">
+                    <h3>Multiple Difficulty Levels</h3>
+                    <p>From beginner to expert, choose your challenge level</p>
+                </div>
+                <div class="feature-item">
+                    <h3>Real-Time Scoring</h3>
+                    <p>Watch your score climb as you discover words faster</p>
+                </div>
+                <div class="feature-item">
+                    <h3>Hint System</h3>
+                    <p>Stuck? Use hints to reveal word locations strategically</p>
+                </div>
+                <div class="feature-item">
+                    <h3>Vocabulary Builder</h3>
+                    <p>Learn new words and expand your vocabulary while playing</p>
+                </div>
+                <div class="feature-item">
+                    <h3>Progress Tracking</h3>
+                    <p>Monitor your improvement with detailed statistics</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Divider -->
+        <div class="divider"></div>
+
+        <!-- Levels Section -->
+        <div class="levels-section">
+            <h2 class="section-title">DIFFICULTY <span class="highlight">LEVELS</span></h2>
+            <div class="levels-grid">
+                <div class="level-card">
+                    <h3>🟢 EASY</h3>
+                    <p><strong>Grid Size:</strong> Smaller grid with common letters</p>
+                    <p><strong>Word Length:</strong> Minimum 3 letters</p>
+                    <p><strong>Time Limit:</strong> Generous time allowance</p>
+                    <p><strong>Perfect For:</strong> Beginners learning the game</p>
+                </div>
+                <div class="level-card">
+                    <h3>🟡 MEDIUM</h3>
+                    <p><strong>Grid Size:</strong> Standard grid with balanced letters</p>
+                    <p><strong>Word Length:</strong> Minimum 4 letters</p>
+                    <p><strong>Time Limit:</strong> Moderate time pressure</p>
+                    <p><strong>Perfect For:</strong> Players seeking balanced challenge</p>
+                </div>
+                <div class="level-card">
+                    <h3>🔴 HARD</h3>
+                    <p><strong>Grid Size:</strong> Large grid with complex patterns</p>
+                    <p><strong>Word Length:</strong> Minimum 5 letters</p>
+                    <p><strong>Time Limit:</strong> Strict time constraints</p>
+                    <p><strong>Perfect For:</strong> Expert word game enthusiasts</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Divider -->
+        <div class="divider"></div>
+
+        <!-- CTA Section -->
+        <div class="cta-section">
+            <h2 class="cta-title">READY TO <span class="highlight">FIND WORDS?</span></h2>
+            <p class="cta-description">
+                Join thousands of players enhancing their vocabulary and word recognition skills
+            </p>
+            <a href="signup.html" class="cta-button">Play Now</a>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>© 2024 FIND THE WORD GAME - EDUCATIONAL PROJECT</p>
+        </div>
+    </div>
+
+    <script>
+        function toggleMobileMenu() {
+            const navbarButtons = document.getElementById('navbarButtons');
+            navbarButtons.classList.toggle('active');
+        }
+    </script>
+</body>
+</html>
