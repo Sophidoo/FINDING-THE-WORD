@@ -244,8 +244,18 @@
         </a>
         <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
         <div class="navbar-buttons" id="navbarButtons">
-            <a href="/register" class="navbar-btn navbar-btn-primary">Get Started</a>
-            <a href="/login" class="navbar-btn navbar-btn-secondary">Login</a>
+            {% if current_user.is_authenticated %}
+                <a href="/game" class="navbar-btn navbar-btn-primary">Get Started</a>
+            {% else %}
+                <a href="/register" class="navbar-btn navbar-btn-primary">Get Started</a>
+            {% endif %}
+            {% if current_user.is_authenticated %}
+                <a href="javascript:void(0)" onclick="confirmLogout()" class="navbar-btn navbar-btn-secondary">
+                    Logout
+                </a>
+            {% else %}
+                <a href="/login" class="navbar-btn navbar-btn-secondary">Login</a>
+            {% endif %}
         </div>
     </nav>
 
@@ -317,6 +327,56 @@
             }
 
             return data;
+        }
+
+        async function confirmLogout() {
+            const result = await Swal.fire({
+                title: 'Are you sure?',
+                text: "You'll be logged out of your account",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#22c55e',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, log me out',
+                cancelButtonText: 'Cancel'
+            });
+
+            if (result.isConfirmed) {
+                // Show loading
+                Swal.fire({
+                    title: 'Logging out...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                try {
+                    const response = await fetch(`${API_BASE}/auth/logout`, {
+                        method: 'POST',
+                        credentials: 'include'
+                    });
+
+                    if (response.ok) {
+                        await Swal.fire({
+                            icon: 'success',
+                            title: 'See you soon!',
+                            text: 'You have been logged out successfully.',
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
+                        window.location.href = '/';
+                    } else {
+                        throw new Error('Logout failed');
+                    }
+                } catch (error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Could not log out. Please try again.'
+                    });
+                }
+            }
         }
     </script>
 

@@ -574,7 +574,11 @@
                 Challenge your vocabulary. Race against time. Discover hidden words in a grid of letters.
             </p>
             <div class="hero-buttons">
-                <a href="/game" class="btn btn-primary">Start Playing</a>
+                {% if current_user.is_authenticated %}
+                    <a href="/game" class="btn btn-primary">Start Playing</a>
+                {% else %}
+                    <a href="/register" class="btn btn-primary">Start Playing</a>
+                {% endif %}
                 <a href="#how-it-works" class="btn btn-secondary">Learn More</a>
             </div>
         </div>
@@ -687,7 +691,11 @@
             <p class="cta-description">
                 Join thousands of players enhancing their vocabulary and word recognition skills
             </p>
-            <a href="/register" class="cta-button">Play Now</a>
+            {% if current_user.is_authenticated %}
+                <a href="/game" class="btn btn-primary">Play Now</a>
+            {% else %}
+                <a href="/register" class="btn btn-primary">Play Now</a>
+            {% endif %}
         </div>
 
     </div>

@@ -7,15 +7,15 @@
         <div class="login-card">
             <div class="login-header">
                 <h1>Sign In</h1>
-                <p>Enter your credentials to continue</p>
+                <p>Enter your credentials to continue. Don't have an account? <a href="/register">Sign Up</a></p>
             </div>
 
             <form class="login-form" id="loginForm">
                 <div class="form-group">
-                    <label for="email">Email</label>
+                    <label for="username">Username or Email</label>
                     <input
-                        type="email"
-                        id="email"
+                        type="text"
+                        id="username"
                         name="email"
                         placeholder="your@email.com"
                         required
@@ -47,25 +47,60 @@
 
 {% block scripts %}
 <script>
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
 
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    const submitBtn = document.getElementById('submitBtn');
+    const originalText = submitBtn.innerHTML;
 
-            const submitBtn = document.getElementById('submitBtn');
-            const originalText = submitBtn.textContent;
-            submitBtn.textContent = 'Signing in...';
-            submitBtn.disabled = true;
+    // Show loading
+    submitBtn.innerHTML = '<span class="spinner"></span> Signing in...';
+    submitBtn.disabled = true;
 
-            setTimeout(() => {
-                console.log('Login attempt:', { email });
-                alert(`Logging in as ${email}`);
-
-                submitBtn.textContent = originalText;
-                submitBtn.disabled = false;
-            }, 1000);
+    try {
+        const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',  // Important for session cookies
+            body: JSON.stringify({ username, password })
         });
-    </script>
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Login failed');
+        }
+
+        // SUCCESS
+        await Swal.fire({
+            icon: 'success',
+            title: 'Welcome back!',
+            text: `Hello, ${data.user?.username}!`,
+            timer: 1800,
+            showConfirmButton: false
+        });
+
+        // Redirect to game or dashboard
+        window.location.href = '/game';
+
+    } catch (error) {
+        // ERROR
+        Swal.fire({
+            icon: 'error',
+            title: 'Login Failed',
+            text: error.message,
+            confirmButtonColor: '#22c55e'
+        });
+    } finally {
+        // Reset button
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }
+});
+</script>
 
 {% endblock %}
