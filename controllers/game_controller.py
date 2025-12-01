@@ -4,7 +4,6 @@ from models.game import GameSession
 from utils.game_generator import generate_game_grid
 from database.db import db
 
-
 def get_levels():
     levels = [
         {'id': 1, 'name': 'Easy', 'grid_size': 8, 'word_count': 5},
@@ -21,6 +20,8 @@ def start_game():
 
     # Generate game grid and words
     game_data = generate_game_grid(level_id)
+    total_words = len(game_data['words'])
+    time_limit_seconds = total_words * 60
 
     # Create game session
     game_session = GameSession(
@@ -29,6 +30,7 @@ def start_game():
         grid_data=game_data['grid'],
         words_to_find=game_data['words'],
         found_words_list=[],
+        time_limit=time_limit_seconds
 
     )
 
@@ -39,7 +41,9 @@ def start_game():
         'session_id': game_session.id,
         'grid': game_data['grid'],
         'words': game_data['words'],
-        'total_words': len(game_data['words'])
+        'total_words': len(game_data['words']),
+        'time_limit': time_limit_seconds,
+        'score': 0
     })
 
 
@@ -61,22 +65,21 @@ def validate_word():
     # Check if already found
     found_words = game_session.found_words_list or []
     already_found = word in found_words
-    print(len(words_list))
     if is_valid and not already_found:
         found_words.append(word)
         game_session.found_words_list = found_words
         db.session.commit()
 
         game_session.calculate_score()
-    print(words_list)
-    print("type:", type(words_list))
-    print(len(words_list))
+        print(game_session.score)
+        print("score", game_session.calculate_score())
     return jsonify({
         'valid': is_valid,
         'already_found': already_found,
         'found_count': len(found_words),
         'total_words': len(words_list),
-        'score': game_session.score
+        'score': game_session.score,
+        'time_limit': game_session.time_limit
     })
 
 
@@ -120,17 +123,17 @@ def end_game():
     if game_session.is_completed:
         return jsonify({'error': 'Game already completed'}), 400
 
-    # End the game and calculate score
-    game_session.end_game()
+    game_session.end_game()  # calls the method
     db.session.commit()
 
     return jsonify({
-        'message': 'Game completed successfully',
-        'score': game_session.score,
+        'message': 'Game completed!',
+        'final_score': game_session.score,
         'words_found': len(game_session.found_words_list),
         'total_words': len(game_session.words),
+        'time_limit': game_session.time_limit,
         'time_taken': game_session.time_taken,
-        'completion_rate': f"{(len(game_session.found_words_list) / len(game_session.words)) * 100:.1f}%"
+        'time_remaining': max(0, game_session.time_limit - (game_session.time_taken or 0))
     })
 
 

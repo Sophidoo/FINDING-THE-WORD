@@ -775,6 +775,9 @@ body {
 .hidden{
     display: none;
 }
+.modal.show {
+    display: flex;
+}
 .leaderboard-row {
   display: grid;
   grid-template-columns: 80px 1fr 150px 150px;

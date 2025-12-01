@@ -1,9 +1,10 @@
 from database.db import db
-from datetime import datetime
+from datetime import datetime, timezone
 import json
-
+UTC = timezone.utc
 
 class GameSession(db.Model):
+
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     level = db.Column(db.Integer, nullable=False, default=1)  # 1: Easy, 2: Medium, 3: Hard
@@ -22,7 +23,8 @@ class GameSession(db.Model):
     start_time = db.Column(db.DateTime, default=datetime.utcnow)
     end_time = db.Column(db.DateTime)
     is_completed = db.Column(db.Boolean, default=False)
-    time_taken = db.Column(db.Integer)  # in seconds
+    time_taken = db.Column(db.Integer)
+    time_limit = db.Column(db.Integer, nullable=False, default=300)
 
     # Score details
     score = db.Column(db.Integer, default=0)
@@ -68,33 +70,12 @@ class GameSession(db.Model):
         """Set found words from Python list"""
         self.found_words = json.dumps(value)
 
+
     def calculate_score(self):
-        """Calculate score based on found words and time taken"""
-        if not self.end_time:
-            return 0
-
-        total_words = len(self.words)
-        found_count = len(self.found_words_list)
-
-        if total_words == 0:
-            return 0
-
-        # Base score: percentage of words found
-        completion_ratio = found_count / total_words
-        base_score = int(completion_ratio * 1000)  # Max 1000 points for completion
-
-        # Time bonus (faster completion = more points)
-        if self.time_taken:
-            time_bonus = max(0, 300 - self.time_taken)  # 5-minute max, decrease bonus over time
-        else:
-            time_bonus = 0
-
-        # Level multiplier
-        level_multiplier = {1: 1.0, 2: 1.5, 3: 2.0}.get(self.level, 1.0)
-
-        final_score = int((base_score + time_bonus) * level_multiplier)
-        self.score = final_score
-        return final_score
+        """Simple: 100 points per word found"""
+        score = len(self.found_words_list) * 100
+        self.score = score
+        return score
 
     def end_game(self):
         """Mark game as completed and calculate score"""
@@ -102,9 +83,8 @@ class GameSession(db.Model):
         self.is_completed = True
 
         # Calculate time taken in seconds
-        if self.start_time and self.end_time:
-            self.time_taken = (self.end_time - self.start_time).total_seconds()
-
+        if self.start_time:
+            self.time_taken = int((self.end_time - self.start_time).total_seconds())
         self.calculate_score()
 
         # Create score record
