@@ -185,6 +185,39 @@
         if (!res.ok) throw new Error(data.message || 'Error');
         return data;
     }
+    // === LOAD PLAYER STATS FROM BACKEND ===
+    async function loadPlayerStats() {
+        try {
+            const stats = await apiCall('/api/leaderboard/user-stats');
+            console.log(stats)
+            // Update all the fields
+            document.getElementById('playerUsername').textContent = stats.username || 'Guest';
+            document.getElementById('totalGames').textContent = stats.total_games;
+            document.getElementById('completedGames').textContent = stats.completed_games;
+
+            // Best score overall (from any level)
+            const bestOverall = Math.max(
+                stats.best_scores[1]?.score || 0,
+                stats.best_scores[2]?.score || 0,
+                stats.best_scores[3]?.score || 0
+            );
+            document.getElementById('bestScore').textContent = bestOverall;
+
+            document.getElementById('avgScore').textContent = Math.round(stats.average_score);
+
+            // Completion rate
+            const completionRate = stats.completion_rate.replace('%', '');
+            document.getElementById('completionRatePercent').textContent = stats.completion_rate;
+            document.getElementById('completionRateFill').style.width = completionRate + '%';
+
+            // Optional: Show rank (you can extend the API later if you want real rank)
+            document.getElementById('playerRank').textContent = '--'; // or calculate from leaderboard
+
+        } catch (err) {
+            console.error('Failed to load player stats:', err);
+            // Keep defaults (0s) if offline or error
+        }
+    }
     async function showGameCompletionModal() {
         if (!currentGame) return;
 
@@ -232,9 +265,11 @@
 
     // === UPDATED endGame (only called when player confirms or quits) ===
     function endGame() {
+        if (timerInterval) clearInterval(timerInterval);
        document.getElementById('gameArea').classList.add('hidden');
        document.getElementById('playerStatsSection').style.display = 'block';
        document.getElementById('leaderboardSection').style.display = 'block';
+       loadPlayerStats();
     }
     function clearGridSelection() {
         document.querySelectorAll('.grid-cell.selected, .grid-cell.found').forEach(cell => {
@@ -444,7 +479,7 @@ function updateTimerDisplay() {
     // Load leaderboard on start
     async function loadLeaderboard() {
         try {
-            const data = await apiCall('/leaderboard');
+            const data = await apiCall('/api/leaderboard/leaderboard');
             const table = document.getElementById('leaderboardTable');
             table.innerHTML = `<div class="leaderboard-row header">
                 <div class="rank">Rank</div>
@@ -464,7 +499,10 @@ function updateTimerDisplay() {
         } catch (err) { console.error(err); }
     }
 
-    document.addEventListener('DOMContentLoaded', loadLeaderboard);
+    document.addEventListener('DOMContentLoaded', () => {
+        loadLeaderboard();
+        loadPlayerStats();
+     });
 
     document.querySelectorAll('.modal').forEach(modal => {
         modal.addEventListener('click', (e) => {
@@ -474,7 +512,8 @@ function updateTimerDisplay() {
 
     document.getElementById('closeCompletionModal').addEventListener('click', () => {
         document.getElementById('gameCompletionModal').classList.remove('show');
-        endGame(); // now clean up and return to dashboard
+        endGame();
+        loadPlayerStats();
     });
 
     document.getElementById('viewLeaderboardBtn').addEventListener('click', () => {
