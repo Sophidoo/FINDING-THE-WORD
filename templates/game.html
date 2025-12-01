@@ -1,332 +1,345 @@
 {% extends "base.html" %}
+{% block title %}Find the Word - Dashboard{% endblock %}
 
-{% block title %}Play Game{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-lg-8">
-        <!-- Game Controls -->
-        <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Word Finder Game</h5>
-                <div>
-                    <span class="badge bg-primary" id="timer">00:00</span>
-                    <span class="badge bg-success ms-2" id="score">Score: 0</span>
-                </div>
-            </div>
-            <div class="card-body">
-                {% if not current_user.is_authenticated %}
-                <div class="alert alert-warning">
-                    <a href="/login">Login</a> to save your progress and compete on the leaderboard!
-                </div>
-                {% endif %}
+<div class="dashboard-container">
 
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Select Difficulty:</label>
-                        <select class="form-select" id="difficulty">
-                            <option value="1">Easy (8x8)</option>
-                            <option value="2">Medium (10x10)</option>
-                            <option value="3">Hard (12x12)</option>
-                        </select>
-                    </div>
-                    <div class="col-md-6 d-flex align-items-end">
-                        <button class="btn btn-primary w-100" onclick="startGame()">
-                            <i class="fas fa-play"></i> Start New Game
-                        </button>
-                    </div>
-                </div>
-            </div>
+    <!-- Header -->
+    <header class="dashboard-header">
+        <div class="dashboard-logo">
+            <div class="logo-box">F</div>
+            <h1 class="dashboard-title">FIND THE WORD</h1>
         </div>
+        <div class="header-actions">
+            {% if current_user.is_authenticated %}
+            <button id="playNowBtn" class="play-now-btn">PLAY NOW</button>
+            <div class="user-info">
+                <div class="user-avatar">{{ current_user.username[0].upper() }}</div>
+                <span class="user-name">{{ current_user.username }}</span>
+            </div>
+            {% else %}
+            <a href="{{ url_for('auth.login') }}" class="play-now-btn">LOGIN TO PLAY</a>
+            {% endif %}
+        </div>
+    </header>
 
-        <!-- Game Grid -->
-        <div class="card">
-            <div class="card-body">
-                <div id="gameArea" class="text-center" style="display: none;">
-                    <div id="wordGrid" class="mb-3"></div>
-
-                    <div class="row">
-                        <div class="col-md-8">
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="wordInput" placeholder="Enter word...">
-                                <button class="btn btn-success" onclick="submitWord()">
-                                    <i class="fas fa-check"></i> Submit
-                                </button>
-                                <button class="btn btn-info" onclick="getHint()">
-                                    <i class="fas fa-lightbulb"></i> Hint
-                                </button>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <button class="btn btn-warning w-100" onclick="endGame()">
-                                <i class="fas fa-stop"></i> End Game
-                            </button>
-                        </div>
-                    </div>
+    <!-- Player Stats (Visible before game) -->
+    <div id="playerStatsSection" class="player-stats-section">
+        <div class="player-stats-card horizontal">
+            <div class="player-stats-header">
+                <div class="player-avatar-large">{{ current_user.username[0].upper() if current_user.is_authenticated else 'P' }}</div>
+                <div class="player-info-large">
+                    <h3 id="playerUsername">{{ current_user.username if current_user.is_authenticated else 'Guest' }}</h3>
+                    <p class="player-rank-badge">Rank #<span id="playerRank">--</span></p>
                 </div>
-
-                <div id="waitingArea" class="text-center py-5">
-                    <i class="fas fa-gamepad fa-4x text-muted mb-3"></i>
-                    <h4>Ready to Play?</h4>
-                    <p>Select a difficulty level and click "Start New Game" to begin!</p>
+            </div>
+            <div class="stats-grid horizontal">
+                <div class="stat-box"><div class="stat-box-value" id="totalGames">0</div><div class="stat-box-label">Total Games</div></div>
+                <div class="stat-box"><div class="stat-box-value" id="completedGames">0</div><div class="stat-box-label">Completed</div></div>
+                <div class="stat-box"><div class="stat-box-value" id="bestScore">0</div><div class="stat-box-label">Best Score</div></div>
+                <div class="stat-box"><div class="stat-box-value" id="avgScore">0</div><div class="stat-box-label">Avg Score</div></div>
+            </div>
+            <div class="completion-rate horizontal">
+                <div class="completion-rate-label">
+                    <span>Completion Rate</span>
+                    <span id="completionRatePercent">0%</span>
+                </div>
+                <div class="completion-rate-bar">
+                    <div class="completion-rate-fill" id="completionRateFill" style="width: 0%"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="col-lg-4">
-        <!-- Word List -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">Words to Find</h5>
-            </div>
-            <div class="card-body">
-                <div id="wordList" class="d-flex flex-wrap gap-2"></div>
-            </div>
-        </div>
+    <!-- Game Area -->
+    <div id="gameArea" class="hidden">
+        <div class="game-layout">
+            <div class="game-panel">
+                <div class="game-controls">
+                    <div class="difficulty-selector">
+                        <button class="difficulty-btn easy active" data-difficulty="1">Easy</button>
+                        <button class="difficulty-btn medium" data-difficulty="2">Medium</button>
+                        <button class="difficulty-btn hard" data-difficulty="3">Hard</button>
+                    </div>
+                    <div class="game-actions">
+                        <button class="action-btn primary" id="newGameBtn">New Game</button>
+                        <button class="action-btn danger" id="endGameBtn">End Game</button>
+                    </div>
+                </div>
 
-        <!-- Game Stats -->
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Game Statistics</h5>
-            </div>
-            <div class="card-body">
-                <div id="gameStats">
-                    <p class="text-center text-muted">Start a game to see statistics</p>
+                <div class="word-grid-container">
+                    <div class="word-grid easy" id="wordGrid"></div>
+                </div>
+
+                <div class="words-to-find">
+                    <h3>Words to Find</h3>
+                    <div class="words-list" id="wordsList"></div>
                 </div>
             </div>
+
+            <aside class="side-panel">
+                <div class="stats-card">
+                    <h3>Game Stats</h3>
+                    <div class="stat-item"><span class="stat-label">Time</span><span class="stat-value timer" id="timer">00:00</span></div>
+                    <div class="stat-item"><span class="stat-label">Score</span><span class="stat-value score" id="score">0</span></div>
+                    <div class="stat-item"><span class="stat-label">Found</span><span class="stat-value" id="foundCount">0/0</span></div>
+                    <div class="progress-container">
+                        <div class="progress-label"><span>Progress</span><span id="progressPercent">0%</span></div>
+                        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width: 0%"></div></div>
+                    </div>
+                </div>
+
+                <div class="achievements-card">
+                    <h3>Word Information</h3>
+                    <div id="wordInfoContent">
+                        <p style="text-align:center;color:#aaa;padding:2rem 1rem;">Select a word to see details!</p>
+                    </div>
+                    <button class="hint-btn" id="hintBtn">Use Hint (-50 pts)</button>
+                    <span class="hint-count">Hints: <span id="hintCount">3</span></span>
+                </div>
+            </aside>
         </div>
     </div>
+
+    <!-- Leaderboard -->
+    <section class="leaderboard-section" id="leaderboardSection">
+        <h2>Leaderboard</h2>
+        <div class="leaderboard-table" id="leaderboardTable">
+            <!-- Filled by JS -->
+        </div>
+    </section>
 </div>
+
+<!-- Notification -->
+<div id="notificationAlert" class="notification-alert"><span id="notificationMessage"></span></div>
+
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/game.js') }}"></script>
 <script>
-    let currentGame = null;
-    let timerInterval = null;
-    let seconds = 0;
+let currentGame = null;
+let timerInterval = null;
+let seconds = 0;
+let hintsUsed = 0;
 
-    function startGame() {
-        const difficulty = document.getElementById('difficulty').value;
-        console.log('Starting game with difficulty:', difficulty);
-
-        apiCall('/game/start', {
-            method: 'POST',
-            body: JSON.stringify({ level_id: parseInt(difficulty) })
-        })
-        .then(gameData => {
-            console.log('Game started successfully:', gameData);
-            currentGame = gameData;
-            displayGameGrid(gameData.grid);
-            displayWordList(gameData.words);
-            startTimer();
-
-            document.getElementById('gameArea').style.display = 'block';
-            document.getElementById('waitingArea').style.display = 'none';
-        })
-        .catch(error => {
-            console.error('Game start failed:', error);
-            showAlert('Failed to start game: ' + error.message, 'danger');
-        });
-    }
-
-    function displayGameGrid(grid) {
-        const gridContainer = document.getElementById('wordGrid');
-        gridContainer.innerHTML = '';
-
-        grid.forEach(row => {
-            const rowDiv = document.createElement('div');
-            rowDiv.className = 'grid-row';
-
-            row.forEach(cell => {
-                const cellDiv = document.createElement('div');
-                cellDiv.className = 'grid-cell';
-                cellDiv.textContent = cell;
-                rowDiv.appendChild(cellDiv);
-            });
-
-            gridContainer.appendChild(rowDiv);
-        });
-    }
-
-    function displayWordList(words) {
-        const wordList = document.getElementById('wordList');
-        wordList.innerHTML = '';
-
-        const info = document.createElement('div');
-        info.className = 'text-muted small';
-        info.textContent = `Find ${words.length} hidden words!`;
-        wordList.appendChild(info);
-
-    }
-
-    function startTimer() {
-        seconds = 0;
-        updateTimer();
-
-        if (timerInterval) clearInterval(timerInterval);
-        timerInterval = setInterval(() => {
-            seconds++;
-            updateTimer();
-        }, 1000);
-    }
-
-    function updateTimer() {
-        const minutes = Math.floor(seconds / 60);
-        const remainingSeconds = seconds % 60;
-        document.getElementById('timer').textContent =
-            `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
-    }
-
-    function submitWord() {
-        const wordInput = document.getElementById('wordInput');
-        const word = wordInput.value.trim().toUpperCase();
-
-        if (!word){
-            showAlert('Incorrect Entry', "Please input a word before submitting", 'error')
-            return;
-        }
-
-        apiCall('/game/validate', {
-            method: 'POST',
-            body: JSON.stringify({
-                session_id: currentGame.session_id,
-                word: word
-            })
-        })
-        .then(result => {
-            if (result.valid && !result.already_found) {
-                // Mark word as found
-                const wordElement = document.getElementById(`word-${word}`);
-                if (wordElement) {
-                    wordElement.className = 'badge bg-success';
-                }
-
-                // Update score
-                document.getElementById('score').textContent = `Score: ${result.found_count * 100}`;
-                const wordSpan = document.createElement('span');
-                wordSpan.className = 'badge bg-success me-2 mb-2';
-                wordSpan.textContent = word;
-                wordSpan.style.fontSize = '1.1rem';
-                wordList.appendChild(wordSpan);
-
-                // Clear input
-                wordInput.value = '';
-
-                // Check if all words found
-                if (result.found_count === result.total_words) {
-                    endGame();
-                }
-            } else if (result.already_found) {
-                showAlert('Word already found!', 'warning');
-            } else {
-                showAlert('Word not found in grid!', 'danger');
-            }
-        })
-        .catch(error => {
-            showAlert(error.message, 'danger');
-        });
-    }
-
-    function getHint() {
-        if (!currentGame) return;
-
-        apiCall('/game/hint', {
-            method: 'POST',
-            body: JSON.stringify({
-                session_id: currentGame.session_id
-            })
-        })
-        .then(hint => {
-            showAlert(`Hint: ${hint.hint}`, 'info');
-        })
-        .catch(error => {
-            showAlert(error.message, 'danger');
-        });
-    }
-
-    function endGame() {
-        if (!currentGame) return;
-
-        if (timerInterval) clearInterval(timerInterval);
-
-        apiCall('/game/end', {
-            method: 'POST',
-            body: JSON.stringify({
-                session_id: currentGame.session_id
-            })
-        })
-        .then(result => {
-            showAlert(`Game completed! Your score: ${result.score}`, 'success');
-
-            // Reset game state
-            currentGame = null;
-            document.getElementById('gameArea').style.display = 'none';
-            document.getElementById('waitingArea').style.display = 'block';
-            document.getElementById('score').textContent = 'Score: 0';
-            document.getElementById('timer').textContent = '00:00';
-        })
-        .catch(error => {
-            showAlert(error.message, 'danger');
-        });
-    }
-
-    // Allow Enter key to submit word
-    document.getElementById('wordInput').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            submitWord();
-        }
+async function apiCall(url, options = {}) {
+    const res = await fetch(url, {
+        method: options.method || 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        body: options.body,
+        credentials: 'include'
     });
-</script>
-
-<style>
-.grid-row {
-    display: flex;
-    justify-content: center;
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Error');
+    return data;
 }
 
-#wordGrid {
-    display: inline-block;
-    background: #f8f9fa;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    margin: 20px auto;
+function startGame() {
+    const level = document.querySelector('.difficulty-btn.active').dataset.difficulty;
+    apiCall('/api/game/start', { method: 'POST', body: JSON.stringify({ level_id: parseInt(level) }) })
+        .then(game => {
+        console.log(game)
+            currentGame = game;
+            renderGrid(game.grid);
+            renderWordList(game.words);
+            startTimer();
+            updateStats(0, game.words.length);
+            hintsUsed = 0;
+            document.getElementById('hintCount').textContent = 3;
+            document.getElementById('gameArea').classList.remove('hidden');
+            document.getElementById('playerStatsSection').style.display = 'none';
+        })
+        .catch(err => showNotification('Error: ' + err.message));
 }
 
-
-.grid-cell {
-    width: 45px;
-    height: 45px;
-    border: 2px solid #444;
-    margin: 3px;
-    font-size: 1.4rem;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: white;
-    border-radius: 6px;
-    text-transform: uppercase;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    transition: all 0.2s;
+function renderGrid(grid) {
+    const container = document.getElementById('wordGrid');
+    container.innerHTML = '';
+    container.className = `word-grid ${grid.length === 8 ? 'easy' : grid.length === 10 ? 'medium' : 'hard'}`;
+    grid.forEach((row, y) => {
+        row.forEach((letter, x) => {
+            const cell = document.createElement('div');
+            cell.className = 'grid-cell';
+            cell.textContent = letter;
+            cell.dataset.x = x;
+            cell.dataset.y = y;
+            container.appendChild(cell);
+        });
+    });
 }
 
-.grid-cell:hover {
-    background: #e3f2fd;
-    transform: scale(1.1);
+function highlightPath(path) {
+    path.forEach(([x, y]) => {
+        const cell = document.querySelector(`.grid-cell[data-x="${x}"][data-y="${y}"]`);
+        if (cell) cell.classList.add('found');
+    });
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-    .grid-cell {
-        width: 35px;
-        height: 35px;
-        font-size: 1rem;
-        margin: 2px;
+function renderWordList(words) {
+    const list = document.getElementById('wordsList');
+    list.innerHTML = '';
+    words.forEach(word => {
+        const item = document.createElement('div');
+        item.className = 'word-item';
+        item.textContent = word;
+        item.id = `word-${word}`;
+        list.appendChild(item);
+    });
+}
+
+function markWordFound(word) {
+    const el = document.getElementById(`word-${word}`);
+    if (el) el.classList.add('found');
+}
+
+function updateStats(found, total) {
+    document.getElementById('foundCount').textContent = `${found}/${total}`;
+    const progress = (found / total) * 100;
+    document.getElementById('progressFill').style.width = progress + '%';
+    document.getElementById('progressPercent').textContent = Math.round(progress) + '%';
+    document.getElementById('score').textContent = (found * 100 - hintsUsed * 50).toLocaleString();
+}
+
+function startTimer() {
+    seconds = 0;
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+        seconds++;
+        const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+        const s = String(seconds % 60).padStart(2, '0');
+        document.getElementById('timer').textContent = `${m}:${s}`;
+    }, 1000);
+}
+
+document.getElementById('hintBtn').onclick = async () => {
+    if (!currentGame || hintsUsed >= 3) return showNotification('No hints left!');
+    try {
+        const hint = await apiCall('/api/game/hint', {
+            method: 'POST',
+            body: JSON.stringify({ session_id: currentGame.session_id })
+        });
+        showNotification(`Hint: Starts with "${hint.hint}"`);
+        hintsUsed++;
+        document.getElementById('hintCount').textContent = 3 - hintsUsed;
+        updateStats(currentGame.found_words?.length || 0, currentGame.words.length);
+    } catch (err) { showNotification(err.message); }
+};
+
+// Drag selection
+let selecting = false;
+let selected = [];
+
+document.getElementById('wordGrid').addEventListener('mousedown', e => {
+    if (!e.target.classList.contains('grid-cell')) return;
+    selecting = true;
+    selected = [e.target];
+    e.target.classList.add('selected');
+});
+document.getElementById('wordGrid').addEventListener('mousemove', e => {
+    if (!selecting || !e.target.classList.contains('grid-cell')) return;
+    if (!selected.includes(e.target)) {
+        selected.push(e.target);
+        e.target.classList.add('selected');
+    }
+});
+document.addEventListener('mouseup', () => {
+    if (!selecting) return;
+    selecting = false;
+    const word = selected.map(c => c.textContent).join('');
+    if (word.length < 3) {
+        selected.forEach(c => c.classList.remove('selected'));
+        selected = [];
+        return;
+    }
+    submitWord(word);
+});
+
+async function submitWord(word) {
+    try {
+        const result = await apiCall('/api/game/validate', {
+            method: 'POST',
+            body: JSON.stringify({ session_id: currentGame.session_id, word })
+        });
+
+        if (result.valid && !result.already_found) {
+            selected.forEach(c => c.classList.add('found'));
+            highlightPath(result.path);
+            markWordFound(word);
+            updateStats(result.found_count, result.total_words);
+            showNotification(`+100! Found: ${word}`);
+            if (result.found_count === result.total_words) {
+                setTimeout(() => endGame(true), 1000);
+            }
+        } else {
+            showNotification(result.already_found ? 'Already found!' : 'Not in list!');
+        }
+    } catch (err) {
+        showNotification('Error: ' + err.message);
+    } finally {
+        selected.forEach(c => c.classList.remove('selected'));
+        selected = [];
     }
 }
 
-</style>
+function endGame(won = false) {
+    if (timerInterval) clearInterval(timerInterval);
+    if (currentGame) {
+        apiCall('/api/game/end', {
+            method: 'POST',
+            body: JSON.stringify({ session_id: currentGame.session_id })
+        }).finally(() => {
+            currentGame = null;
+            document.getElementById('gameArea').classList.add('hidden');
+            document.getElementById('playerStatsSection').style.display = 'block';
+            loadLeaderboard();
+            showNotification(won ? 'You Won!' : 'Game Ended');
+        });
+    }
+}
+
+function showNotification(msg) {
+    const el = document.getElementById('notificationMessage');
+    el.textContent = msg;
+    const alert = document.getElementById('notificationAlert');
+    alert.classList.add('show');
+    setTimeout(() => alert.classList.remove('show'), 3000);
+}
+
+// Button Events
+document.getElementById('playNowBtn')?.addEventListener('click', startGame);
+document.getElementById('newGameBtn').addEventListener('click', startGame);
+document.getElementById('endGameBtn').addEventListener('click', () => confirm('End game?') && endGame());
+document.querySelectorAll('.difficulty-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+    });
+});
+
+// Load leaderboard on start
+async function loadLeaderboard() {
+    try {
+        const data = await apiCall('/leaderboard');
+        const table = document.getElementById('leaderboardTable');
+        table.innerHTML = `<div class="leaderboard-row header">
+            <div class="rank">Rank</div>
+            <div class="player-name">Player</div>
+            <div class="player-score">Score</div>
+            <div class="player-time">Time</div>
+        </div>`;
+        data.forEach((p, i) => {
+            const row = document.createElement('div');
+            row.className = 'leaderboard-row' + (p.is_current ? ' current-player' : '');
+            row.innerHTML = `<div class="rank ${i < 3 ? 'top' : ''}">${i + 1}</div>
+                <div class="player-name">${p.username} ${p.is_current ? '(You)' : ''}</div>
+                <div class="player-score">${p.score}</div>
+                <div class="player-time">${p.time}</div>`;
+            table.appendChild(row);
+        });
+    } catch (err) { console.error(err); }
+}
+
+document.addEventListener('DOMContentLoaded', loadLeaderboard);
+</script>
 {% endblock %}
