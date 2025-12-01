@@ -55,20 +55,22 @@ def validate_word():
         return jsonify({'error': 'Invalid game session'}), 400
 
     # Check if word is in the word list
-    words_list = game_session.words_to_find
+    words_list = game_session.words
     is_valid = word in words_list
 
     # Check if already found
     found_words = game_session.found_words_list or []
     already_found = word in found_words
-
+    print(len(words_list))
     if is_valid and not already_found:
         found_words.append(word)
         game_session.found_words_list = found_words
         db.session.commit()
 
         game_session.calculate_score()
-
+    print(words_list)
+    print("type:", type(words_list))
+    print(len(words_list))
     return jsonify({
         'valid': is_valid,
         'already_found': already_found,

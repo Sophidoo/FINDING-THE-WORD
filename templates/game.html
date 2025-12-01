@@ -144,7 +144,7 @@ function startGame() {
             renderGrid(game.grid);
             renderWordList(game.words);
             startTimer();
-            updateStats(0, game.words.length);
+            updateStats(0, game.total_words);
             hintsUsed = 0;
             document.getElementById('hintCount').textContent = 3;
             document.getElementById('gameArea').classList.remove('hidden');
@@ -169,12 +169,6 @@ function renderGrid(grid) {
     });
 }
 
-function highlightPath(path) {
-    path.forEach(([x, y]) => {
-        const cell = document.querySelector(`.grid-cell[data-x="${x}"][data-y="${y}"]`);
-        if (cell) cell.classList.add('found');
-    });
-}
 
 function renderWordList(words) {
     const list = document.getElementById('wordsList');
@@ -261,10 +255,9 @@ async function submitWord(word) {
             method: 'POST',
             body: JSON.stringify({ session_id: currentGame.session_id, word })
         });
-
+        console.log(result)
         if (result.valid && !result.already_found) {
-            selected.forEach(c => c.classList.add('found'));
-            highlightPath(result.path);
+            selected.forEach(c => c.classList.add('found'))
             markWordFound(word);
             updateStats(result.found_count, result.total_words);
             showNotification(`+100! Found: ${word}`);
