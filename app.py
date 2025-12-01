@@ -13,6 +13,7 @@ login_manager = LoginManager()
 mail = Mail()
 migrate = Migrate()
 
+
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
@@ -49,6 +50,12 @@ def create_app():
     app.register_blueprint(gameBlueprint, url_prefix="/api/game")  # Fixed typo
     app.register_blueprint(wordsBlueprint, url_prefix="/api/words")  # Fixed typo
 
+    @app.cli.command("init-db")
+    def init_db_command():
+        """Create all database tables."""
+        with app.app_context():
+            db.create_all()
+            print("Database initialized successfully!")
     return app
 
 app = create_app()
