@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard & Achievements - Find the Word</title>
+    <link rel="stylesheet" href="/static/css/global.css">
+    <link rel="stylesheet" href="/static/css/leaderboard.css">
+</head>
+<body>
+    <div class="leaderboard-container">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="dashboard-logo">
+                <div class="logo-box">F</div>
+                <h1 class="dashboard-title">FIND THE WORD</h1>
+            </div>
+            <div class="header-actions">
+                <button class="back-to-dashboard-btn" onclick="window.location.href='dashboard.html'">← BACK TO DASHBOARD</button>
+                <div class="user-info">
+                    <div class="user-avatar">P</div>
+                    <span class="user-name" id="headerUsername">Player</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Leaderboard Section -->
+        <section class="full-leaderboard-section">
+            <h2>📊 LEADERBOARD</h2>
+            <div class="leaderboard-table">
+                <div class="leaderboard-row header">
+                    <div class="rank">Rank</div>
+                    <div class="player-name">Player</div>
+                    <div class="player-score">Best Score</div>
+                    <div class="player-games">Games</div>
+                    <div class="player-time">Avg Time</div>
+                </div>
+                <!-- Top Players (Mock Data) -->
+                <div class="leaderboard-row">
+                    <div class="rank top medal-gold">1</div>
+                    <div class="player-name">WordMaster99</div>
+                    <div class="player-score">2,450</div>
+                    <div class="player-games">45</div>
+                    <div class="player-time">01:23</div>
+                </div>
+                <div class="leaderboard-row">
+                    <div class="rank top medal-silver">2</div>
+                    <div class="player-name">QuickFinder</div>
+                    <div class="player-score">2,180</div>
+                    <div class="player-games">38</div>
+                    <div class="player-time">01:45</div>
+                </div>
+                <div class="leaderboard-row">
+                    <div class="rank top medal-bronze">3</div>
+                    <div class="player-name">LetterHunter</div>
+                    <div class="player-score">1,920</div>
+                    <div class="player-games">52</div>
+                    <div class="player-time">02:10</div>
+                </div>
+                <div class="leaderboard-row">
+                    <div class="rank">4</div>
+                    <div class="player-name">WordWizard</div>
+                    <div class="player-score">1,750</div>
+                    <div class="player-games">29</div>
+                    <div class="player-time">02:34</div>
+                </div>
+                <div class="leaderboard-row">
+                    <div class="rank">5</div>
+                    <div class="player-name">PuzzlePro</div>
+                    <div class="player-score">1,580</div>
+                    <div class="player-games">41</div>
+                    <div class="player-time">02:56</div>
+                </div>
+                <div class="leaderboard-row">
+                    <div class="rank">6</div>
+                    <div class="player-name">WordSmith42</div>
+                    <div class="player-score">1,420</div>
+                    <div class="player-games">35</div>
+                    <div class="player-time">03:12</div>
+                </div>
+                <div class="leaderboard-row">
+                    <div class="rank">7</div>
+                    <div class="player-name">BrainTeaser</div>
+                    <div class="player-score">1,350</div>
+                    <div class="player-games">27</div>
+                    <div class="player-time">03:18</div>
+                </div>
+                <div class="leaderboard-row">
+                    <div class="rank">8</div>
+                    <div class="player-name">GridSeeker</div>
+                    <div class="player-score">1,280</div>
+                    <div class="player-games">33</div>
+                    <div class="player-time">03:25</div>
+                </div>
+                <div class="leaderboard-row">
+                    <div class="rank">9</div>
+                    <div class="player-name">LetterLover</div>
+                    <div class="player-score">1,190</div>
+                    <div class="player-games">19</div>
+                    <div class="player-time">03:42</div>
+                </div>
+                <div class="leaderboard-row">
+                    <div class="rank">10</div>
+                    <div class="player-name">Vocabulist</div>
+                    <div class="player-score">1,120</div>
+                    <div class="player-games">24</div>
+                    <div class="player-time">03:55</div>
+                </div>
+                <div class="leaderboard-row">
+                    <div class="rank">11</div>
+                    <div class="player-name">WordNinja</div>
+                    <div class="player-score">1,050</div>
+                    <div class="player-games">31</div>
+                    <div class="player-time">04:02</div>
+                </div>
+                <div class="leaderboard-row">
+                    <div class="rank">12</div>
+                    <div class="player-name">SearchMaster</div>
+                    <div class="player-score">980</div>
+                    <div class="player-games">18</div>
+                    <div class="player-time">04:15</div>
+                </div>
+                <div class="leaderboard-row">
+                    <div class="rank">13</div>
+                    <div class="player-name">PuzzleKing</div>
+                    <div class="player-score">920</div>
+                    <div class="player-games">22</div>
+                    <div class="player-time">04:28</div>
+                </div>
+                <div class="leaderboard-row">
+                    <div class="rank">14</div>
+                    <div class="player-name">LetterScout</div>
+                    <div class="player-score">850</div>
+                    <div class="player-games">16</div>
+                    <div class="player-time">04:35</div>
+                </div>
+                <div class="leaderboard-row">
+                    <div class="rank">15</div>
+                    <div class="player-name">WordChampion</div>
+                    <div class="player-score">780</div>
+                    <div class="player-games">28</div>
+                    <div class="player-time">04:48</div>
+                </div>
+                <div class="leaderboard-row">
+                    <div class="rank">16</div>
+                    <div class="player-name">GridExplorer</div>
+                    <div class="player-score">720</div>
+                    <div class="player-games">21</div>
+                    <div class="player-time">05:02</div>
+                </div>
+                <div class="leaderboard-row">
+                    <div class="rank">17</div>
+                    <div class="player-name">WordSeeker</div>
+                    <div class="player-score">650</div>
+                    <div class="player-games">14</div>
+                    <div class="player-time">05:15</div>
+                </div>
+                <div class="leaderboard-row">
+                    <div class="rank">18</div>
+                    <div class="player-name">PuzzleFan</div>
+                    <div class="player-score">580</div>
+                    <div class="player-games">25</div>
+                    <div class="player-time">05:28</div>
+                </div>
+                <div class="leaderboard-row">
+                    <div class="rank">19</div>
+                    <div class="player-name">LetterHawk</div>
+                    <div class="player-score">510</div>
+                    <div class="player-games">12</div>
+                    <div class="player-time">05:42</div>
+                </div>
+                <div class="leaderboard-row">
+                    <div class="rank">20</div>
+                    <div class="player-name">WordHunter</div>
+                    <div class="player-score">450</div>
+                    <div class="player-games">19</div>
+                    <div class="player-time">05:55</div>
+                </div>
+                <!-- Current Player Row (Dynamically positioned) -->
+                <div class="leaderboard-row current-player" id="currentPlayerRow">
+                    <div class="rank" id="currentPlayerRank">--</div>
+                    <div class="player-name"><span id="currentPlayerName">Player</span> (You)</div>
+                    <div class="player-score" id="currentPlayerScore">0</div>
+                    <div class="player-games" id="currentPlayerGames">0</div>
+                    <div class="player-time" id="currentPlayerTime">--:--</div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+    
+        // Load player stats from localStorage
+        function loadPlayerStats() {
+            const saved = localStorage.getItem('findTheWordStats');
+            if (saved) {
+                return JSON.parse(saved);
+            }
+            return {
+                username: 'Player',
+                totalGames: 0,
+                completedGames: 0,
+                bestScore: 0,
+                totalScore: 0,
+                scores: [],
+                achievements: {},
+                easyCompleted: 0,
+                mediumCompleted: 0,
+                hardCompleted: 0,
+                perfectGames: 0,
+                maxStreak: 0
+            };
+        }
+
+        // Check achievement progress
+        function checkAchievementUnlocked(achievement, stats) {
+            const req = achievement.requirement;
+            
+            switch (req.type) {
+                case 'score':
+                    return stats.bestScore >= req.value;
+                case 'streak':
+                    return (stats.maxStreak || 0) >= req.value;
+                case 'difficulty':
+                    const key = `${req.difficulty}Completed`;
+                    return (stats[key] || 0) >= req.value;
+                case 'perfect':
+                    return (stats.perfectGames || 0) >= req.value;
+                case 'games':
+                    return stats.totalGames >= req.value;
+                default:
+                    return false;
+            }
+        }
+
+        // Calculate achievement progress
+        function calculateProgress(achievement, stats) {
+            const req = achievement.requirement;
+            let current = 0;
+            
+            switch (req.type) {
+                case 'score':
+                    current = stats.bestScore;
+                    break;
+                case 'streak':
+                    current = stats.maxStreak || 0;
+                    break;
+                case 'difficulty':
+                    const key = `${req.difficulty}Completed`;
+                    current = stats[key] || 0;
+                    break;
+                case 'perfect':
+                    current = stats.perfectGames || 0;
+                    break;
+                case 'games':
+                    current = stats.totalGames;
+                    break;
+            }
+            
+            return Math.min(100, Math.round((current / req.value) * 100));
+        }
+
+        // Render achievements
+        function renderAchievements() {
+            const stats = loadPlayerStats();
+            const grid = document.getElementById('achievementsGrid');
+            grid.innerHTML = '';
+            
+            achievementDefinitions.forEach(achievement => {
+                const unlocked = checkAchievementUnlocked(achievement, stats);
+                const progress = calculateProgress(achievement, stats);
+                
+                const card = document.createElement('div');
+                card.className = `achievement-card ${unlocked ? 'unlocked' : 'locked'}`;
+                
+                card.innerHTML = `
+                    <div class="achievement-icon-large ${unlocked ? '' : 'locked'}">${achievement.icon}</div>
+                    <div class="achievement-details">
+                        <h3 class="achievement-title">${achievement.name}</h3>
+                        <p class="achievement-description">${achievement.description}</p>
+                        ${!unlocked ? `
+                            <div class="achievement-progress">
+                                <div class="achievement-progress-bar">
+                                    <div class="achievement-progress-fill" style="width: ${progress}%"></div>
+                                </div>
+                                <span class="achievement-progress-text">${progress}%</span>
+                            </div>
+                        ` : '<div class="achievement-completed">✓ UNLOCKED</div>'}
+                    </div>
+                `;
+                
+                grid.appendChild(card);
+            });
+        }
+
+        // Update leaderboard with current player
+        function updateCurrentPlayer() {
+            const stats = loadPlayerStats();
+            
+            // Update header
+            document.getElementById('headerUsername').textContent = stats.username;
+            
+            // Update current player row
+            document.getElementById('currentPlayerName').textContent = stats.username;
+            document.getElementById('currentPlayerScore').textContent = stats.bestScore.toLocaleString();
+            document.getElementById('currentPlayerGames').textContent = stats.totalGames;
+            
+            // Calculate average time (mock data)
+            document.getElementById('currentPlayerTime').textContent = '--:--';
+            
+            // Calculate rank
+            const leaderboardScores = [2450, 2180, 1920, 1750, 1580, 1420, 1350, 1280, 1190, 1120, 1050, 980, 920, 850, 780, 720, 650, 580, 510, 450];
+            let rank = 1;
+            for (let score of leaderboardScores) {
+                if (stats.bestScore < score) {
+                    rank++;
+                } else {
+                    break;
+                }
+            }
+            document.getElementById('currentPlayerRank').textContent = rank;
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            renderAchievements();
+            updateCurrentPlayer();
+        });
+    </script>
+</body>
+</html>
