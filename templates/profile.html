@@ -2,9 +2,287 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Find the Word</title>
+    <link rel="stylesheet" href="/static/css/global.css">
 </head>
 <body>
+    <div class="profile-container">
+        <!-- Profile Header -->
+        <header class="profile-header">
+            <div class="profile-logo">
+                <div class="logo-box">F</div>
+                <h1 class="profile-title">MY PROFILE</h1>
+            </div>
+            <button id="backToDashboard" class="back-btn">← BACK TO DASHBOARD</button>
+        </header>
 
+        <!-- Profile Content -->
+        <div class="profile-content">
+            <!-- User Avatar Section -->
+            <div class="profile-avatar-section">
+                <div class="profile-avatar-large">P</div>
+                <h2 id="profileDisplayName">Player</h2>
+            </div>
+
+            <!-- Account Information -->
+            <div class="profile-card">
+                <h3>ACCOUNT INFORMATION</h3>
+                
+                <!-- Username Section -->
+                <div class="profile-field">
+                    <div class="field-header">
+                        <label>Username</label>
+                        <button class="edit-btn" id="editUsernameBtn">EDIT</button>
+                    </div>
+                    <div class="field-content" id="usernameDisplay">
+                        <span class="field-value" id="usernameValue">Player</span>
+                    </div>
+                    <div class="field-edit hidden" id="usernameEdit">
+                        <input type="text" id="usernameInput" class="profile-input" placeholder="Enter new username">
+                        <div class="field-actions">
+                            <button class="save-btn" id="saveUsernameBtn">SAVE</button>
+                            <button class="cancel-btn" id="cancelUsernameBtn">CANCEL</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Email Section -->
+                <div class="profile-field">
+                    <div class="field-header">
+                        <label>Email</label>
+                        <button class="edit-btn" id="editEmailBtn">EDIT</button>
+                    </div>
+                    <div class="field-content" id="emailDisplay">
+                        <span class="field-value" id="emailValue">Not set</span>
+                    </div>
+                    <div class="field-edit hidden" id="emailEdit">
+                        <input type="email" id="emailInput" class="profile-input" placeholder="Enter email address">
+                        <div class="field-actions">
+                            <button class="save-btn" id="saveEmailBtn">SAVE</button>
+                            <button class="cancel-btn" id="cancelEmailBtn">CANCEL</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Password Change Section -->
+            <div class="profile-card">
+                <h3>CHANGE PASSWORD</h3>
+                <form id="passwordForm">
+                    <div class="form-group">
+                        <label for="newPassword">New Password</label>
+                        <input type="password" id="newPassword" class="profile-input" placeholder="Enter new password">
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm New Password</label>
+                        <input type="password" id="confirmPassword" class="profile-input" placeholder="Confirm new password">
+                    </div>
+                    <button type="submit" class="update-password-btn">UPDATE PASSWORD</button>
+                </form>
+            </div>
+
+            <!-- Logout Section -->
+            <div class="logout-section">
+                <button id="logoutBtn" class="logout-btn">🚪 LOGOUT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Alert -->
+    <div id="notificationAlert" class="notification-alert">
+        <span id="notificationMessage"></span>
+    </div>
+
+    <script>
+        // Load user data from localStorage
+        let userData = {
+            username: 'Player',
+            email: '',
+            password: ''
+        };
+
+        // Load player stats from localStorage
+        function loadUserData() {
+            const savedStats = localStorage.getItem('findTheWordStats');
+            if (savedStats) {
+                const stats = JSON.parse(savedStats);
+                userData.username = stats.username || 'Player';
+                userData.email = stats.email || '';
+            }
+            
+            // Load password separately (stored from login)
+            const savedPassword = localStorage.getItem('userPassword');
+            if (savedPassword) {
+                userData.password = savedPassword;
+            }
+            
+            updateProfileDisplay();
+        }
+
+        // Update profile display
+        function updateProfileDisplay() {
+            document.getElementById('profileDisplayName').textContent = userData.username;
+            document.getElementById('usernameValue').textContent = userData.username;
+            document.getElementById('emailValue').textContent = userData.email || 'Not set';
+            
+            // Update avatar
+            const avatarLetter = userData.username.charAt(0).toUpperCase();
+            document.querySelector('.profile-avatar-large').textContent = avatarLetter;
+        }
+
+        // Save user data to localStorage
+        function saveUserData() {
+            const savedStats = localStorage.getItem('findTheWordStats');
+            let stats = savedStats ? JSON.parse(savedStats) : {};
+            stats.username = userData.username;
+            stats.email = userData.email;
+            localStorage.setItem('findTheWordStats', JSON.stringify(stats));
+        }
+
+        // Show notification
+        function showNotification(message, isSuccess = true) {
+            const notification = document.getElementById('notificationAlert');
+            const messageEl = document.getElementById('notificationMessage');
+            
+            messageEl.textContent = message;
+            notification.classList.add('show');
+            notification.style.background = isSuccess ? '#22c55e' : '#ef4444';
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Username editing
+        document.getElementById('editUsernameBtn').addEventListener('click', () => {
+            document.getElementById('usernameDisplay').classList.add('hidden');
+            document.getElementById('usernameEdit').classList.remove('hidden');
+            document.getElementById('usernameInput').value = userData.username;
+            document.getElementById('usernameInput').focus();
+        });
+
+        document.getElementById('cancelUsernameBtn').addEventListener('click', () => {
+            document.getElementById('usernameDisplay').classList.remove('hidden');
+            document.getElementById('usernameEdit').classList.add('hidden');
+        });
+
+        document.getElementById('saveUsernameBtn').addEventListener('click', () => {
+            const newUsername = document.getElementById('usernameInput').value.trim();
+            
+            if (!newUsername) {
+                showNotification('Username cannot be empty', false);
+                return;
+            }
+            
+            if (newUsername.length < 3) {
+                showNotification('Username must be at least 3 characters', false);
+                return;
+            }
+            
+            userData.username = newUsername;
+            saveUserData();
+            updateProfileDisplay();
+            
+            document.getElementById('usernameDisplay').classList.remove('hidden');
+            document.getElementById('usernameEdit').classList.add('hidden');
+            
+            showNotification('Username updated successfully!');
+        });
+
+        // Email editing
+        document.getElementById('editEmailBtn').addEventListener('click', () => {
+            document.getElementById('emailDisplay').classList.add('hidden');
+            document.getElementById('emailEdit').classList.remove('hidden');
+            document.getElementById('emailInput').value = userData.email;
+            document.getElementById('emailInput').focus();
+        });
+
+        document.getElementById('cancelEmailBtn').addEventListener('click', () => {
+            document.getElementById('emailDisplay').classList.remove('hidden');
+            document.getElementById('emailEdit').classList.add('hidden');
+        });
+
+        document.getElementById('saveEmailBtn').addEventListener('click', () => {
+            const newEmail = document.getElementById('emailInput').value.trim();
+            
+            if (newEmail && !validateEmail(newEmail)) {
+                showNotification('Please enter a valid email address', false);
+                return;
+            }
+            
+            userData.email = newEmail;
+            saveUserData();
+            updateProfileDisplay();
+            
+            document.getElementById('emailDisplay').classList.remove('hidden');
+            document.getElementById('emailEdit').classList.add('hidden');
+            
+            showNotification('Email updated successfully!');
+        });
+
+        // Email validation
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        // Password change
+        document.getElementById('passwordForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            // Validate new password
+            if (!newPassword) {
+                showNotification('New password cannot be empty', false);
+                return;
+            }
+            
+            if (newPassword.length < 6) {
+                showNotification('Password must be at least 6 characters', false);
+                return;
+            }
+            
+            // Validate password confirmation
+            if (newPassword !== confirmPassword) {
+                showNotification('Passwords do not match', false);
+                return;
+            }
+            
+            // Save new password
+            userData.password = newPassword;
+            localStorage.setItem('userPassword', newPassword);
+            
+            // Clear form
+            document.getElementById('passwordForm').reset();
+            
+            showNotification('Password updated successfully!');
+        });
+
+        // Back to dashboard
+        document.getElementById('backToDashboard').addEventListener('click', () => {
+            window.location.href = 'dashboard.html';
+        });
+
+        // Logout functionality
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            // Clear all user data from localStorage
+            localStorage.removeItem('findTheWordStats');
+            localStorage.removeItem('userPassword');
+            
+            // Show notification
+            showNotification('Logging out...');
+            
+            // Redirect to login page after a short delay
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1000);
+        });
+
+        // Initialize on load
+        loadUserData();
+    </script>
 </body>
 </html>
