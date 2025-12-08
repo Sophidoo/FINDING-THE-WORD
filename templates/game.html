@@ -402,7 +402,7 @@
             const item = document.createElement('div');
             item.className = 'word-item';
             item.textContent = wordData;           // e.g., "ELEPHANT"
-            item.id = `word-${wordData.word}`;       // This is the DB ID!
+            item.id = `word-${wordData}`;       // This is the DB ID!
             item.style.cursor = 'pointer';              // Make it look clickable
             item.title = 'Click for word details';
 
@@ -648,7 +648,7 @@ function updateTimerDisplay() {
         el.textContent = msg;
         const alert = document.getElementById('notificationAlert');
         alert.classList.add('show');
-        setTimeout(() => alert.classList.remove('show'), 3000);
+        setTimeout(() => alert.classList.remove('show'), 4000);
     }
 
     // Button Events
