@@ -34,6 +34,21 @@ def get_word(word_id):
     word = Word.query.get_or_404(word_id)
     return jsonify(word.to_dict())
 
+def search_word():
+    word_name = request.args.get('word')  # ?q=ELEPHANT
+    if not word_name:
+        return jsonify({'error': 'Query parameter "word" is required'}), 400
+
+    # Search exact match, case-insensitive
+    word = Word.query.filter(
+        db.func.upper(Word.word) == word_name.strip().upper()
+    ).first()
+
+    if not word:
+        return jsonify({'error': 'Word not found'}), 404
+
+    return jsonify(word.to_dict())
+
 
 def get_random_words():
     """Get random words for the game"""

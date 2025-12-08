@@ -194,6 +194,7 @@
     let hintsUsed = 0;
     let timeRemaining = 0;
     let gameState = 'idle';
+    let timerEl = null;
 
     async function apiCall(url, options = {}) {
         const res = await fetch(url, {
@@ -353,6 +354,7 @@
             // Success! Now we're really playing
             currentGame = game;
             gameState = 'playing';
+            console.log(game)
 
             // UI Changes when game actually starts
             document.querySelector('.difficulty-selector').style.display = 'none';   // Hide difficulty buttons
@@ -391,16 +393,69 @@
     }
 
 
+
     function renderWordList(words) {
         const list = document.getElementById('wordsList');
         list.innerHTML = '';
-        words.forEach(word => {
+
+        words.forEach(wordData => {
             const item = document.createElement('div');
             item.className = 'word-item';
-            item.textContent = word;
-            item.id = `word-${word}`;
+            item.textContent = wordData;           // e.g., "ELEPHANT"
+            item.id = `word-${wordData.word}`;       // This is the DB ID!
+            item.style.cursor = 'pointer';              // Make it look clickable
+            item.title = 'Click for word details';
+
+            // Click handler — show word info
+            item.addEventListener('click', () => showWordDetails(wordData));
+
             list.appendChild(item);
         });
+    }
+
+    async function showWordDetails(wordData) {
+        const container = document.getElementById('wordInfoContent');
+
+        // Show loading state
+        container.innerHTML = `
+            <div style="text-align:center;padding:2rem;color:#888;">
+                <p>Loading word details...</p>
+            </div>
+        `;
+
+        try {
+            const word = await apiCall(`/api/words/search?word=${wordData}`);
+
+            // Beautiful display
+            container.innerHTML = `
+                <div class="word-info-display">
+                    <h3 style="margin:0 0 0.5rem 0;color:#00d4ff;font-size:1.4rem;">
+                        ${word.word}
+                    </h3>
+                    <p style="margin:0.5rem 0;font-style:italic;color:#aaa;">
+                        (${word.length} letters • ${word.difficulty} • ${word.category})
+                    </p>
+                    <hr style="border:0;border-top:1px solid #444;margin:1rem 0;">
+                    <p style="line-height:1.6;color:#ddd;">
+                        <strong>Definition:</strong><br>
+                        ${word.definition || '<em>No definition available</em>'}
+                    </p>
+                    ${word.example ? `
+                        <p style="margin-top:1rem;color:#b0ff9d;">
+                            <strong>Example:</strong> "${word.example}"
+                        </p>
+                    ` : ''}
+                </div>
+            `;
+
+        } catch (err) {
+            console.error('Failed to load word:', err);
+            container.innerHTML = `
+                <p style="text-align:center;color:#e74c3c;padding:2rem;">
+                    Failed to load word details.
+                </p>
+            `;
+        }
     }
 
     function markWordFound(word) {
@@ -423,33 +478,67 @@
 function startTimer() {
     if (!currentGame?.time_limit) return;
 
-    timeRemaining = currentGame.time_limit;  // e.g. 480 seconds
+    timeRemaining = currentGame.time_limit;
+
     if (timerInterval) clearInterval(timerInterval);
 
-    // Update display immediately
     updateTimerDisplay();
 
-    timerInterval = setInterval(() => {
+    timerInterval = setInterval(async () => {
         timeRemaining--;
         updateTimerDisplay();
 
-        // Time's up!
         if (timeRemaining <= 0) {
             clearInterval(timerInterval);
             document.getElementById('timer').textContent = "00:00";
-            showNotification("⏰ Time's Up!");
-            showGameCompletionModal();  // End game automatically
+            timerEl.style.color = '#e74c3c';
+
+            // TIME'S UP — GAME OVER!
+            showNotification("Time's Up! Game Over");
+
+            try {
+                // Still end the session (to save stats), but show correct message
+                const result = await apiCall('/api/game/end', {
+                    method: 'POST',
+                    body: JSON.stringify({ session_id: currentGame.session_id })
+                });
+
+                // Show "Game Over" modal instead of "Congratulations"
+                document.getElementById('modalTitle').textContent = 'Time’s Up!';
+                document.getElementById('modalMessage').innerHTML = `
+                    <p style="font-size:1.2rem;color:#fff;">
+                        You ran out of time!
+                    </p>
+                    <p style="margin:1rem 0;color:#ff6b6b;">
+                        You found <strong>${result.words_found}</strong> out of <strong>${result.total_words}</strong> words.
+                    </p>
+                `;
+                document.getElementById('modalScore').textContent = result.final_score;
+                document.getElementById('modalTotalWords').textContent = result.total_words;
+                document.getElementById('modalWordsFound').textContent = result.words_found;
+                document.getElementById('modalTimeTaken').textContent = result.time_taken;
+
+                document.getElementById('gameCompletionModal').classList.add('show');
+                currentGame = null;
+
+            } catch (err) {
+                showNotification('Failed to save game');
+                document.getElementById('modalTitle').textContent = 'Time’s Up!';
+                document.getElementById('modalMessage').textContent = 'Game over. Score not saved.';
+                document.getElementById('gameCompletionModal').classList.add('show');
+            }
         }
     }, 1000);
 }
 
 function updateTimerDisplay() {
+    if (!timerEl) timerEl = document.getElementById('timer');
     const mins = String(Math.floor(timeRemaining / 60)).padStart(2, '0');
     const secs = String(timeRemaining % 60).padStart(2, '0');
-    document.getElementById('timer').textContent = `${mins}:${secs}`;
+    timerEl.textContent = `${mins}:${secs}`;
 
     // Optional: turn red when < 30 seconds
-    const timerEl = document.getElementById('timer');
+    if (!timerEl) timerEl = document.getElementById('timer');
     if (timeRemaining <= 30) {
         timerEl.style.color = '#e74c3c';
         timerEl.style.fontWeight = 'bold';
@@ -519,8 +608,27 @@ function updateTimerDisplay() {
                 showNotification(`+100! "${word}" found!`);
 
                 if (result.found_count === result.total_words) {
-                    clearInterval(timerInterval);
-                    setTimeout(showGameCompletionModal, 800);  // small delay for celebration
+                    clearInterval(timerInterval);  // Stop timer
+                    setTimeout(async () => {
+                        try {
+                            const final = await apiCall('/api/game/end', {
+                                method: 'POST',
+                                body: JSON.stringify({ session_id: currentGame.session_id })
+                            });
+
+                            document.getElementById('modalTitle').textContent = 'CONGRATULATIONS!';
+                            document.getElementById('modalMessage').textContent = 'You found all the words!';
+                            document.getElementById('modalScore').textContent = final.final_score;
+                            document.getElementById('modalTotalWords').textContent = final.total_words;
+                            document.getElementById('modalWordsFound').textContent = final.words_found;
+                            document.getElementById('modalTimeTaken').textContent = final.time_taken;
+
+                            document.getElementById('gameCompletionModal').classList.add('show');
+                            currentGame = null;
+                        } catch (err) {
+                            showNotification('You won! But score may not be saved.');
+                        }
+                    }, 800);
                 }
             } else {
                 showNotification(result.already_found ? 'Already found!' : 'Not in list!');
