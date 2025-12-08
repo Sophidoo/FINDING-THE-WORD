@@ -1,6 +1,7 @@
 
 from flask_login import UserMixin
 from database.db import db
+# from models.user_achievement import user_achievement
 from flask_bcrypt import generate_password_hash, check_password_hash
 
 class User(db.Model, UserMixin):
@@ -10,6 +11,12 @@ class User(db.Model, UserMixin):
     password_hash = db.Column(db.String(128))
     is_admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=db.func.now())
+    # achievements = db.relationship(
+    #     'Achievement',
+    #     secondary=user_achievement,
+    #     backref=db.backref('users', lazy='dynamic'),
+    #     lazy='dynamic'
+    # )
 
     # Relationships
     scores = db.relationship('Score', backref='player', lazy=True)

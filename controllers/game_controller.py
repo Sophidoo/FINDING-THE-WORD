@@ -4,6 +4,7 @@ from models.game import GameSession
 from utils.game_generator import generate_game_grid
 from database.db import db
 
+
 def get_levels():
     levels = [
         {'id': 1, 'name': 'Easy', 'grid_size': 8, 'word_count': 5},
