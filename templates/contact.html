@@ -1,10 +1,317 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "base.html" %}
+{% block title %}Find the Word - Contact Us{% endblock %}
 
-</body>
-</html>
+
+{% block content %}
+    <div class="dashboard-container">
+        <!-- Header/Navbar -->
+        <header class="dashboard-header">
+            <div class="navbar-left">
+                <a href="/" class="dashboard-logo">
+                    <div class="logo-box">F</div>
+                    <h1 class="dashboard-title">FIND THE WORD</h1>
+                </a>
+                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">☰</button>
+                <nav class="navbar-links" id="navbarLinks">
+                    <a href="/game" class="nav-link">Game</a>
+                    <a href="/leaderboard" class="nav-link">Leaderboard</a>
+                    <a href="/contact" class="nav-link active">Contact Us</a>
+                </nav>
+            </div>
+            <div class="navbar-right" id="navbarRight">
+                <a href="/game" class="play-now-btn">PLAY NOW</a>
+                <div class="user-info" id="userInfoBtn">
+                    <div class="user-avatar" id="playerLogo">P</div>
+                    <span class="user-name" id="playerUsername">Player</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Contact Page Content -->
+        <main class="contact-page">
+            <!-- Hero Section -->
+            <section class="contact-hero">
+                <h1>GET IN TOUCH</h1>
+                <p>We'd love to hear from you! Send us your feedback, questions, or suggestions.</p>
+            </section>
+
+            <!-- Main Content Grid -->
+            <div class="contact-content">
+                <!-- Feedback Form -->
+                <section class="feedback-section">
+                    <div class="section-header">
+                        <h2>📝 Send Us Feedback</h2>
+                        <p>Your feedback helps us improve the game!</p>
+                    </div>
+
+                    <form id="feedbackForm" class="feedback-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="name">Your Name</label>
+                                <input type="text" id="name" name="name" placeholder="Enter your name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="email">Email Address</label>
+                                <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="subject">Subject</label>
+                            <select id="subject" name="subject" required>
+                                <option value="">Select a topic</option>
+                                <option value="feedback">General Feedback</option>
+                                <option value="bug">Bug Report</option>
+                                <option value="suggestion">Feature Suggestion</option>
+                                <option value="question">Question</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="message">Your Message</label>
+                            <textarea id="message" name="message" rows="6" placeholder="Tell us what's on your mind..." required></textarea>
+                        </div>
+
+                        <div class="form-group rating-group">
+                            <label>How would you rate your experience?</label>
+                            <div class="rating-options">
+                                <label class="rating-option">
+                                    <input type="radio" name="rating" value="5">
+                                    <span class="rating-emoji">😍</span>
+                                    <span class="rating-text">Amazing</span>
+                                </label>
+                                <label class="rating-option">
+                                    <input type="radio" name="rating" value="4">
+                                    <span class="rating-emoji">😊</span>
+                                    <span class="rating-text">Good</span>
+                                </label>
+                                <label class="rating-option">
+                                    <input type="radio" name="rating" value="3">
+                                    <span class="rating-emoji">😐</span>
+                                    <span class="rating-text">Okay</span>
+                                </label>
+                                <label class="rating-option">
+                                    <input type="radio" name="rating" value="2">
+                                    <span class="rating-emoji">😕</span>
+                                    <span class="rating-text">Poor</span>
+                                </label>
+                                <label class="rating-option">
+                                    <input type="radio" name="rating" value="1">
+                                    <span class="rating-emoji">😢</span>
+                                    <span class="rating-text">Bad</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="submit-feedback-btn">
+                            <span>SEND FEEDBACK</span>
+                            <span class="btn-icon">→</span>
+                        </button>
+                    </form>
+                </section>
+
+                <!-- Contact Info Sidebar -->
+                <aside class="contact-info">
+                    <div class="info-card">
+                        <div class="info-icon">📧</div>
+                        <h3>Email Us</h3>
+                        <p>support@findtheword.game</p>
+                    </div>
+
+                    <div class="info-card">
+                        <div class="info-icon">🕐</div>
+                        <h3>Response Time</h3>
+                        <p>We typically respond within 24-48 hours</p>
+                    </div>
+
+                    <div class="info-card">
+                        <div class="info-icon">📍</div>
+                        <h3>Our Address</h3>
+                        <p>123 Gaming Street, Tech Park<br>San Francisco, CA 94105<br>United States</p>
+                    </div>
+
+                    <div class="info-card">
+                        <div class="info-icon">📞</div>
+                        <h3>Phone Number</h3>
+                        <p>+1 (555) 123-4567</p>
+                    </div>
+
+                    <div class="info-card highlight">
+                        <div class="info-icon">🎮</div>
+                        <h3>Quick Links</h3>
+                        <div class="quick-links">
+                            <a href="/game">Play Game</a>
+                            <a href="/leaderboard">Leaderboard</a>
+                            <a href="/profile">My Profile</a>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="contact-footer">
+            <p>© 2024 Find the Word. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="modal">
+        <div class="modal-content success-modal">
+            <div class="success-icon">✓</div>
+            <h2>Thank You!</h2>
+            <p>Your feedback has been submitted successfully. We appreciate you taking the time to help us improve!</p>
+            <button class="modal-btn" onclick="closeSuccessModal()">Continue</button>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Reuse the same apiCall function pattern as your game page
+    async function apiCall(url, options = {}) {
+        const res = await fetch(url, {
+            method: options.method || 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            },
+            body: options.body ? JSON.stringify(options.body) : null,
+            credentials: 'include'  // Crucial for Flask-Login session
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            throw new Error(data.error || data.message || 'Something went wrong');
+        }
+
+        return data;
+    }
+    async function loadPlayerStats() {
+        try {
+            const stats = await apiCall('/api/leaderboard/user-stats');
+            console.log(stats)
+            document.getElementById('playerUsername').textContent = stats.username || 'Guest';
+            document.getElementById('playerLogo').textContent = stats.username.trim().charAt(0).toUpperCase() || 'P';
+
+        } catch (err) {
+            console.error('Failed to load player stats:', err);
+            // Keep defaults (0s) if offline or error
+        }
+    }
+
+    // Success Modal Controls
+    function showSuccessModal() {
+        document.getElementById('successModal').classList.add('show');
+    }
+
+    function closeSuccessModal() {
+        document.getElementById('successModal').classList.remove('show');
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('successModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('successModal')) {
+            closeSuccessModal();
+        }
+    });
+
+    // Main Feedback Form Submission
+    document.getElementById('feedbackForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const submitBtn = this.querySelector('.submit-feedback-btn');
+        const originalHTML = submitBtn.innerHTML;
+
+        // UI: Show loading state
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span>Sending...</span><span class="btn-icon">↻</span>';
+
+        const formData = new FormData(this);
+        const payload = {
+            name: formData.get('name'),
+            email: formData.get('email'),
+            subject: formData.get('subject'),
+            message: formData.get('message'),
+            rating: formData.get('rating') || null
+        };
+
+        try {
+            const result = await apiCall('/api/feedback/feedback', {
+                method: 'POST',
+                body: payload
+            });
+            console.log(result);
+
+            // Success!
+            showSuccessModal();
+            this.reset();
+
+
+        } catch (err) {
+            console.error('Feedback failed:', err);
+            showNotification('Failed to send feedback: ' + err.message);
+        } finally {
+            // Always restore button
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalHTML;
+        }
+    });
+
+    // Reuse your existing notification system (from game page)
+    function showNotification(msg, duration = 4000) {
+        // Create notification element if not exists (in case it's not in contact.html yet)
+        let alert = document.getElementById('notificationAlert');
+        if (!alert) {
+            alert = document.createElement('div');
+            alert.id = 'notificationAlert';
+            alert.className = 'notification-alert';
+            alert.innerHTML = '<span id="notificationMessage"></span>';
+            document.body.appendChild(alert);
+        }
+
+        const msgEl = document.getElementById('notificationMessage');
+        msgEl.textContent = msg;
+        alert.classList.add('show');
+
+        setTimeout(() => alert.classList.remove('show'), duration);
+    }
+
+    // Keep your existing scripts (mobile menu, profile click, etc.)
+    document.getElementById('userInfoBtn').addEventListener('click', function() {
+        window.location.href = '/profile';
+    });
+
+    // Load saved username on page load
+    const savedStats = localStorage.getItem('findTheWordStats');
+    if (savedStats) {
+        const stats = JSON.parse(savedStats);
+        if (stats.username) {
+            document.querySelector('.user-name').textContent = stats.username;
+            document.querySelector('.user-avatar').textContent = stats.username.charAt(0).toUpperCase();
+        }
+    }
+
+    // Mobile menu toggle
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const navbarLinks = document.getElementById('navbarLinks');
+    const navbarRight = document.getElementById('navbarRight');
+
+    if (mobileMenuBtn) {
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenuBtn.classList.toggle('active');
+            navbarLinks.classList.toggle('active');
+            navbarRight.classList.toggle('active');
+            mobileMenuBtn.textContent = mobileMenuBtn.classList.contains('active') ? '✕' : '☰';
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadPlayerStats();
+     });
+</script>
+
+{% endblock %}

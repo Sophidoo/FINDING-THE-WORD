@@ -1,28 +1,49 @@
 from flask import Blueprint, jsonify, request
-
+from flask_login import current_user
 from models.game import GameSession
 from models.score import Score
-from sqlalchemy import func
+from models.user import User
+from sqlalchemy import func, desc
 from database.db import db
 
 
 
 def get_leaderboard():
     level = request.args.get('level', type=int)  # Optional level filter
-    limit = request.args.get('limit', 10, type=int)
+    limit = request.args.get('limit', 20, type=int)  # Default to 20 for your page
 
-    query = Score.query
+    # Base query: Group by user, get max score, total games, avg time
+    query = db.session.query(
+        User.id.label('user_id'),
+        User.username,
+        func.max(Score.score).label('best_score'),
+        func.count(Score.id).label('total_games'),  # Or use GameSession if separate
+        func.avg(Score.time_taken).label('avg_time')  # Assuming Score has 'time_taken' in seconds
+    ).join(Score, Score.user_id == User.id)  # Join Score to User
 
     if level:
-        query = query.filter_by(level=level)
+        query = query.filter(Score.level == level)
 
-    # Get top scores
-    top_scores = query.order_by(Score.score.desc()) \
-        .limit(limit) \
-        .all()
+    # Group by user, order by best_score DESC, limit
+    top_users = query.group_by(User.id, User.username) \
+                     .order_by(desc('best_score')) \
+                     .limit(limit) \
+                     .all()
+
+    # Format response
+    leaderboard = []
+    for row in top_users:
+        leaderboard.append({
+            'user_id': row.user_id,
+            'username': row.username or 'Guest',
+            'score': row.best_score or 0,
+            'total_games': row.total_games or 0,
+            'avg_time': row.avg_time or 0,  # In seconds; format in JS
+            'is_current_user': current_user.is_authenticated and row.user_id == current_user.id
+        })
 
     return jsonify({
-        'leaderboard': [score.to_dict() for score in top_scores],
+        'leaderboard': leaderboard,
         'level': level,
         'limit': limit
     })
