@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Find the Word - Contact Us{% endblock %}
+
+
+{% block content %}
+     <div class="profile-container">
+        <!-- Profile Header -->
+        <header class="profile-header">
+            <div class="profile-logo">
+                <div class="logo-box">F</div>
+                <h1 class="profile-title">MY PROFILE</h1>
+            </div>
+            <button id="backToDashboard" class="back-btn">← BACK TO DASHBOARD</button>
+        </header>
+
+        <!-- Profile Content -->
+        <div class="profile-content">
+            <!-- User Avatar Section -->
+            <div class="profile-avatar-section">
+                <div class="profile-avatar-large">P</div>
+                <h2 id="profileDisplayName">Player</h2>
+            </div>
+
+            <!-- Account Information -->
+            <div class="profile-card">
+                <h3>ACCOUNT INFORMATION</h3>
+
+                <!-- Username Section -->
+                <div class="profile-field">
+                    <div class="field-header">
+                        <label>Username</label>
+                        <button class="edit-btn" id="editUsernameBtn">EDIT</button>
+                    </div>
+                    <div class="field-content" id="usernameDisplay">
+                        <span class="field-value" id="usernameValue">Player</span>
+                    </div>
+                    <div class="field-edit hidden" id="usernameEdit">
+                        <input type="text" id="usernameInput" class="profile-input" placeholder="Enter new username">
+                        <div class="field-actions">
+                            <button class="save-btn" id="saveUsernameBtn">SAVE</button>
+                            <button class="cancel-btn" id="cancelUsernameBtn">CANCEL</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Email Section -->
+                <div class="profile-field">
+                    <div class="field-header">
+                        <label>Email</label>
+                        <button class="edit-btn" id="editEmailBtn">EDIT</button>
+                    </div>
+                    <div class="field-content" id="emailDisplay">
+                        <span class="field-value" id="emailValue">Not set</span>
+                    </div>
+                    <div class="field-edit hidden" id="emailEdit">
+                        <input type="email" id="emailInput" class="profile-input" placeholder="Enter email address">
+                        <div class="field-actions">
+                            <button class="save-btn" id="saveEmailBtn">SAVE</button>
+                            <button class="cancel-btn" id="cancelEmailBtn">CANCEL</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Password Change Section -->
+            <div class="profile-card">
+                <h3>CHANGE PASSWORD</h3>
+                <form id="passwordForm">
+                    <div class="form-group">
+                        <label for="newPassword">New Password</label>
+                        <input type="password" id="newPassword" class="profile-input" placeholder="Enter new password">
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm New Password</label>
+                        <input type="password" id="confirmPassword" class="profile-input" placeholder="Confirm new password">
+                    </div>
+                    <button type="submit" class="update-password-btn">UPDATE PASSWORD</button>
+                </form>
+            </div>
+
+            <!-- Logout Section -->
+            <div class="logout-section">
+                <button id="logoutBtn" class="logout-btn">🚪 LOGOUT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Alert -->
+    <div id="notificationAlert" class="notification-alert">
+        <span id="notificationMessage"></span>
+    </div>
+
+{% endblock %}
+
+{% block scripts %}
+    <script>
+
+    </script>
+{% endblock %}

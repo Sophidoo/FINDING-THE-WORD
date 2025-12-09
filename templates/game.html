@@ -607,6 +607,13 @@ function updateTimerDisplay() {
 
                 showNotification(`+100! "${word}" found!`);
 
+                if (result.new_achievements && result.new_achievements.length > 0) {
+                    result.new_achievements.forEach(ach => {
+                        showAchievementNotification(ach); // Use your existing notification function
+                    });
+                    renderDashboardAchievements();
+                }
+
                 if (result.found_count === result.total_words) {
                     clearInterval(timerInterval);  // Stop timer
                     setTimeout(async () => {
@@ -663,10 +670,7 @@ function updateTimerDisplay() {
     });
 
 
-    document.addEventListener('DOMContentLoaded', () => {
-        document.querySelector('.difficulty-btn.easy').classList.add('active');
-        loadPlayerStats();
-     });
+
 
     document.querySelectorAll('.modal').forEach(modal => {
         modal.addEventListener('click', (e) => {
@@ -686,6 +690,10 @@ function updateTimerDisplay() {
         window.location.href = 'leaderboard'
     });
 
+    document.getElementById('userInfoBtn').addEventListener('click', () => {
+        window.location.href = 'profile';
+    });
+
     document.getElementById('cancelEndGame').addEventListener('click', () => {
         document.getElementById('endGameModal').classList.remove('show');
     });
@@ -695,5 +703,144 @@ function updateTimerDisplay() {
         endGame();
         showNotification('Game ended');
     });
+
+    const achievementDefinitions = [
+        { id: 'score_bronze', name: 'Bronze Scorer', description: 'Reach a score of 500', icon: '🥉', requirement: { type: 'score', value: 500 }, category: 'score' },
+        { id: 'score_silver', name: 'Silver Scorer', description: 'Reach a score of 1000', icon: '🥈', requirement: { type: 'score', value: 1000 }, category: 'score' },
+        { id: 'score_gold', name: 'Gold Scorer', description: 'Reach a score of 2000', icon: '🥇', requirement: { type: 'score', value: 2000 }, category: 'score' },
+        { id: 'streak_3', name: 'Word Streak', description: 'Find 3 words in a row', icon: '🔥', requirement: { type: 'streak', value: 3 }, category: 'streak' },
+        { id: 'streak_5', name: 'Hot Streak', description: 'Find 5 words in a row', icon: '🔥🔥', requirement: { type: 'streak', value: 5 }, category: 'streak' },
+        { id: 'streak_10', name: 'Unstoppable', description: 'Find 10 words in a row', icon: '🔥🔥🔥', requirement: { type: 'streak', value: 10 }, category: 'streak' },
+        { id: 'complete_easy', name: 'Easy Master', description: 'Complete 10 Easy games', icon: '✅', requirement: { type: 'difficulty', difficulty: 'easy', value: 10 }, category: 'completion' },
+        { id: 'complete_medium', name: 'Medium Master', description: 'Complete 10 Medium games', icon: '✅✅', requirement: { type: 'difficulty', difficulty: 'medium', value: 10 }, category: 'completion' },
+        { id: 'complete_hard', name: 'Hard Master', description: 'Complete 10 Hard games', icon: '✅✅✅', requirement: { type: 'difficulty', difficulty: 'hard', value: 10 }, category: 'completion' },
+        { id: 'perfect_game', name: 'Perfectionist', description: 'Complete a game with 100% words found', icon: '💯', requirement: { type: 'perfect', value: 1 }, category: 'special' },
+        { id: 'games_10', name: 'Getting Started', description: 'Play 10 games', icon: '🎮', requirement: { type: 'games', value: 10 }, category: 'special' },
+        { id: 'games_50', name: 'Marathon Player', description: 'Play 50 games', icon: '🏃', requirement: { type: 'games', value: 50 }, category: 'special' }
+    ];
+
+
+    function checkAchievementUnlocked(achievement, stats) {
+        const req = achievement.requirement;
+        switch (req.type) {
+            case 'score': return stats.bestScore >= req.value;
+            case 'streak': return (stats.maxStreak || 0) >= req.value;
+            case 'difficulty': return (stats[`${req.difficulty}Completed`] || 0) >= req.value;
+            case 'perfect': return (stats.perfectGames || 0) >= req.value;
+            case 'games': return stats.totalGames >= req.value;
+            default: return false;
+        }
+    }
+    function calculateProgress(achievement, stats) {
+        const req = achievement.requirement;
+        let current = 0;
+        switch (req.type) {
+            case 'score': current = stats.bestScore; break;
+            case 'streak': current = stats.maxStreak || 0; break;
+            case 'difficulty': current = stats[`${req.difficulty}Completed`] || 0; break;
+            case 'perfect': current = stats.perfectGames || 0; break;
+            case 'games': current = stats.totalGames; break;
+        }
+        return Math.min(100, Math.round((current / req.value) * 100));
+    }
+
+    async function renderDashboardAchievements() {
+        const grid = document.getElementById('dashboardAchievementsGrid');
+        if (!grid) return;
+
+        grid.innerHTML = '<p style="color:#aaa;">Loading achievements...</p>';
+
+        try {
+            // Fetch from the new API we made in Step 4
+            const achievements = await apiCall('/api/achievements/list');
+
+            grid.innerHTML = '';
+            achievements.forEach(ach => {
+                const unlocked = ach.unlocked;
+
+                const card = document.createElement('div');
+                card.className = `dashboard-achievement-card ${unlocked ? 'unlocked' : 'locked'}`;
+                card.innerHTML = `
+                    <div class="dashboard-achievement-icon ${unlocked ? '' : 'locked'}">${ach.icon}</div>
+                    <div class="dashboard-achievement-details">
+                        <h3 class="dashboard-achievement-title">${ach.name}</h3>
+                        <p class="dashboard-achievement-description">${ach.description}</p>
+                        ${unlocked
+                            ? '<div class="dashboard-achievement-completed">✓ UNLOCKED</div>'
+                            : '<div class="dashboard-achievement-locked">🔒 LOCKED</div>'}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        } catch (err) {
+            console.error(err);
+            grid.innerHTML = '<p style="color:red;">Failed to load achievements.</p>';
+        }
+    }
+
+        // Show achievement unlock notification
+        function showAchievementNotification(achievement) {
+            const notification = document.getElementById('achievementNotification');
+            const iconElement = document.getElementById('achievementNotificationIcon');
+            const nameElement = document.getElementById('achievementNotificationName');
+
+            iconElement.textContent = achievement.icon;
+            nameElement.textContent = achievement.name;
+            notification.classList.add('show');
+
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 4000);
+        }
+
+        // Check for newly unlocked achievements
+        function checkNewlyUnlockedAchievements(previousStats, currentStats) {
+            const newlyUnlocked = [];
+            achievementDefinitions.forEach(achievement => {
+                const wasUnlocked = checkAchievementUnlocked(achievement, previousStats);
+                const isNowUnlocked = checkAchievementUnlocked(achievement, currentStats);
+                if (!wasUnlocked && isNowUnlocked) {
+                    newlyUnlocked.push(achievement);
+                }
+            });
+            return newlyUnlocked;
+        }
+
+    // Show notifications for newly unlocked achievements
+    function notifyNewAchievements(previousStats) {
+        const newAchievements = checkNewlyUnlockedAchievements(previousStats, playerStats);
+        if (newAchievements.length > 0) {
+            showAchievementNotification(newAchievements[0]);
+            newAchievements.slice(1).forEach((achievement, index) => {
+                setTimeout(() => {
+                    showAchievementNotification(achievement);
+                }, (index + 1) * 4500);
+            });
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelector('.difficulty-btn.easy').classList.add('active');
+        loadPlayerStats();
+        renderDashboardAchievements();
+
+
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const navbarLinks = document.getElementById('navbarLinks');
+        const navbarRight = document.getElementById('navbarRight');
+
+        if (mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileMenuBtn.classList.toggle('active');
+                navbarLinks.classList.toggle('active');
+                navbarRight.classList.toggle('active');
+
+                // Update button text
+                mobileMenuBtn.textContent = mobileMenuBtn.classList.contains('active') ? '✕' : '☰';
+            });
+        }
+
+     });
+
 </script>
 {% endblock %}

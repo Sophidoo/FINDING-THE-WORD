@@ -11,12 +11,7 @@ class User(db.Model, UserMixin):
     password_hash = db.Column(db.String(128))
     is_admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=db.func.now())
-    # achievements = db.relationship(
-    #     'Achievement',
-    #     secondary=user_achievement,
-    #     backref=db.backref('users', lazy='dynamic'),
-    #     lazy='dynamic'
-    # )
+    achievements = db.relationship('UserAchievement', backref='user', lazy=True)
 
     # Relationships
     scores = db.relationship('Score', backref='player', lazy=True)
