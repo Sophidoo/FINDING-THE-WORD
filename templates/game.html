@@ -704,45 +704,8 @@ function updateTimerDisplay() {
         showNotification('Game ended');
     });
 
-    const achievementDefinitions = [
-        { id: 'score_bronze', name: 'Bronze Scorer', description: 'Reach a score of 500', icon: '🥉', requirement: { type: 'score', value: 500 }, category: 'score' },
-        { id: 'score_silver', name: 'Silver Scorer', description: 'Reach a score of 1000', icon: '🥈', requirement: { type: 'score', value: 1000 }, category: 'score' },
-        { id: 'score_gold', name: 'Gold Scorer', description: 'Reach a score of 2000', icon: '🥇', requirement: { type: 'score', value: 2000 }, category: 'score' },
-        { id: 'streak_3', name: 'Word Streak', description: 'Find 3 words in a row', icon: '🔥', requirement: { type: 'streak', value: 3 }, category: 'streak' },
-        { id: 'streak_5', name: 'Hot Streak', description: 'Find 5 words in a row', icon: '🔥🔥', requirement: { type: 'streak', value: 5 }, category: 'streak' },
-        { id: 'streak_10', name: 'Unstoppable', description: 'Find 10 words in a row', icon: '🔥🔥🔥', requirement: { type: 'streak', value: 10 }, category: 'streak' },
-        { id: 'complete_easy', name: 'Easy Master', description: 'Complete 10 Easy games', icon: '✅', requirement: { type: 'difficulty', difficulty: 'easy', value: 10 }, category: 'completion' },
-        { id: 'complete_medium', name: 'Medium Master', description: 'Complete 10 Medium games', icon: '✅✅', requirement: { type: 'difficulty', difficulty: 'medium', value: 10 }, category: 'completion' },
-        { id: 'complete_hard', name: 'Hard Master', description: 'Complete 10 Hard games', icon: '✅✅✅', requirement: { type: 'difficulty', difficulty: 'hard', value: 10 }, category: 'completion' },
-        { id: 'perfect_game', name: 'Perfectionist', description: 'Complete a game with 100% words found', icon: '💯', requirement: { type: 'perfect', value: 1 }, category: 'special' },
-        { id: 'games_10', name: 'Getting Started', description: 'Play 10 games', icon: '🎮', requirement: { type: 'games', value: 10 }, category: 'special' },
-        { id: 'games_50', name: 'Marathon Player', description: 'Play 50 games', icon: '🏃', requirement: { type: 'games', value: 50 }, category: 'special' }
-    ];
 
 
-    function checkAchievementUnlocked(achievement, stats) {
-        const req = achievement.requirement;
-        switch (req.type) {
-            case 'score': return stats.bestScore >= req.value;
-            case 'streak': return (stats.maxStreak || 0) >= req.value;
-            case 'difficulty': return (stats[`${req.difficulty}Completed`] || 0) >= req.value;
-            case 'perfect': return (stats.perfectGames || 0) >= req.value;
-            case 'games': return stats.totalGames >= req.value;
-            default: return false;
-        }
-    }
-    function calculateProgress(achievement, stats) {
-        const req = achievement.requirement;
-        let current = 0;
-        switch (req.type) {
-            case 'score': current = stats.bestScore; break;
-            case 'streak': current = stats.maxStreak || 0; break;
-            case 'difficulty': current = stats[`${req.difficulty}Completed`] || 0; break;
-            case 'perfect': current = stats.perfectGames || 0; break;
-            case 'games': current = stats.totalGames; break;
-        }
-        return Math.min(100, Math.round((current / req.value) * 100));
-    }
 
     async function renderDashboardAchievements() {
         const grid = document.getElementById('dashboardAchievementsGrid');
@@ -793,18 +756,6 @@ function updateTimerDisplay() {
             }, 4000);
         }
 
-        // Check for newly unlocked achievements
-        function checkNewlyUnlockedAchievements(previousStats, currentStats) {
-            const newlyUnlocked = [];
-            achievementDefinitions.forEach(achievement => {
-                const wasUnlocked = checkAchievementUnlocked(achievement, previousStats);
-                const isNowUnlocked = checkAchievementUnlocked(achievement, currentStats);
-                if (!wasUnlocked && isNowUnlocked) {
-                    newlyUnlocked.push(achievement);
-                }
-            });
-            return newlyUnlocked;
-        }
 
     // Show notifications for newly unlocked achievements
     function notifyNewAchievements(previousStats) {

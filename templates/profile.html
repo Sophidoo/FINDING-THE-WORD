@@ -10,15 +10,15 @@
                 <div class="logo-box">F</div>
                 <h1 class="profile-title">MY PROFILE</h1>
             </div>
-            <button id="backToDashboard" class="back-btn">← BACK TO DASHBOARD</button>
+            <button id="backToDashboard" class="back-btn">← BACK TO GAME</button>
         </header>
 
         <!-- Profile Content -->
         <div class="profile-content">
             <!-- User Avatar Section -->
             <div class="profile-avatar-section">
-                <div class="profile-avatar-large">P</div>
-                <h2 id="profileDisplayName">Player</h2>
+                <div class="profile-avatar-large" id="playerLogo">P</div>
+                <h2 id="playerUsername">Player</h2>
             </div>
 
             <!-- Account Information -->
@@ -67,6 +67,10 @@
                 <h3>CHANGE PASSWORD</h3>
                 <form id="passwordForm">
                     <div class="form-group">
+                        <label for="currentPassword">Current Password</label>
+                        <input type="password" id="currentPassword" class="profile-input" placeholder="Enter current password" required>
+                    </div>
+                    <div class="form-group">
                         <label for="newPassword">New Password</label>
                         <input type="password" id="newPassword" class="profile-input" placeholder="Enter new password">
                     </div>
@@ -94,6 +98,210 @@
 
 {% block scripts %}
     <script>
+    // === API Helper ===
+    async function apiCall(url, options = {}) {
+        const res = await fetch(url, {
+            method: options.method || 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            },
+            body: options.body ? JSON.stringify(options.body) : null,
+            credentials: 'include'
+        });
 
-    </script>
+        const data = await res.json();
+
+        if (!res.ok) {
+            // This throws the error message sent from Flask (e.g., "Username already exists")
+            throw new Error(data.error || data.message || 'Something went wrong');
+        }
+
+        return data;
+    }
+
+    // === UI Notification Helper ===
+    function showNotification(message, isSuccess = true) {
+        const notification = document.getElementById('notificationAlert');
+        const messageEl = document.getElementById('notificationMessage');
+
+        messageEl.textContent = message;
+        notification.classList.add('show');
+        notification.style.background = isSuccess ? '#22c55e' : '#ef4444'; // Green or Red
+
+        setTimeout(() => {
+            notification.classList.remove('show');
+        }, 3000);
+    }
+
+    // === Core Logic ===
+    async function loadPlayerStats() {
+        try {
+            const stats = await apiCall('/api/auth/profile');
+
+            // Update UI
+            document.getElementById('playerUsername').textContent = stats.username || 'Guest';
+            document.getElementById('usernameValue').textContent = stats.username || 'Guest';
+            document.getElementById('emailValue').textContent = stats.email || 'Not set';
+
+            // Update Avatar
+            const firstLetter = (stats.username || 'P').trim().charAt(0).toUpperCase();
+            document.getElementById('playerLogo').textContent = firstLetter;
+
+        } catch (err) {
+            console.error('Failed to load profile:', err);
+            showNotification('Failed to load profile data', false);
+        }
+    }
+
+    // === Username Editing ===
+    const usernameDisplay = document.getElementById('usernameDisplay');
+    const usernameEdit = document.getElementById('usernameEdit');
+
+    document.getElementById('editUsernameBtn').addEventListener('click', () => {
+        usernameDisplay.classList.add('hidden');
+        usernameEdit.classList.remove('hidden');
+        document.getElementById('usernameInput').value = document.getElementById('usernameValue').textContent;
+    });
+
+    document.getElementById('cancelUsernameBtn').addEventListener('click', () => {
+        usernameDisplay.classList.remove('hidden');
+        usernameEdit.classList.add('hidden');
+    });
+
+    document.getElementById('saveUsernameBtn').addEventListener('click', async () => {
+        const newUsername = document.getElementById('usernameInput').value.trim();
+
+        if (newUsername.length < 3) {
+            return showNotification('Username must be at least 3 characters', false);
+        }
+
+        try {
+            // Call Backend
+            await apiCall('/api/auth/profile/update', {
+                method: 'PUT',
+                body: { username: newUsername }
+            });
+
+            // Success
+            showNotification('Username updated successfully!');
+            document.getElementById('usernameValue').textContent = newUsername;
+            document.getElementById('playerUsername').textContent = newUsername;
+            document.getElementById('playerLogo').textContent = newUsername.charAt(0).toUpperCase();
+
+            // Close Edit Mode
+            usernameDisplay.classList.remove('hidden');
+            usernameEdit.classList.add('hidden');
+
+        } catch (err) {
+            // Error handling (e.g., "Username already exists")
+            showNotification(err.message, false);
+        }
+    });
+
+    // === Email Editing ===
+    const emailDisplay = document.getElementById('emailDisplay');
+    const emailEdit = document.getElementById('emailEdit');
+
+    document.getElementById('editEmailBtn').addEventListener('click', () => {
+        emailDisplay.classList.add('hidden');
+        emailEdit.classList.remove('hidden');
+        document.getElementById('emailInput').value = document.getElementById('emailValue').textContent;
+    });
+
+    document.getElementById('cancelEmailBtn').addEventListener('click', () => {
+        emailDisplay.classList.remove('hidden');
+        emailEdit.classList.add('hidden');
+    });
+
+    document.getElementById('saveEmailBtn').addEventListener('click', async () => {
+        const newEmail = document.getElementById('emailInput').value.trim();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!emailRegex.test(newEmail)) {
+            return showNotification('Invalid email address', false);
+        }
+
+        try {
+            // Call Backend
+            await apiCall('/api/auth/profile/update', {
+                method: 'PUT',
+                body: { email: newEmail }
+            });
+
+            // Success
+            showNotification('Email updated successfully!');
+            document.getElementById('emailValue').textContent = newEmail;
+
+            // Close Edit Mode
+            emailDisplay.classList.remove('hidden');
+            emailEdit.classList.add('hidden');
+
+        } catch (err) {
+            // Error handling (e.g., "Email already registered")
+            showNotification(err.message, false);
+        }
+    });
+
+    // === Password Change ===
+    document.getElementById('passwordForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const currentPassword = document.getElementById('currentPassword').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        if (newPassword !== confirmPassword) {
+            return showNotification('New passwords do not match', false);
+        }
+
+        if (newPassword.length < 6) {
+            return showNotification('Password must be at least 6 characters', false);
+        }
+
+        try {
+            await apiCall('/api/auth/profile/change-password', {
+                method: 'PUT',
+                body: {
+                    current_password: currentPassword,
+                    new_password: newPassword
+                }
+            });
+
+            showNotification('Password changed successfully!');
+            e.target.reset(); // Clear the form
+        } catch (err) {
+            showNotification(err.message, false); // e.g., "Current password is incorrect"
+        }
+    });
+
+    // === Navigation & Logout ===
+    document.getElementById('backToDashboard').addEventListener('click', () => {
+        window.location.href = '/game';
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+        try {
+            await apiCall('/api/auth/logout', { method: 'POST' });
+            window.location.href = '/login'; // Redirect to login page
+        } catch (err) {
+            console.error(err);
+            window.location.href = '/login'; // Force redirect anyway
+        }
+    });
+
+    // Mobile Menu
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    if (mobileMenuBtn) {
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenuBtn.classList.toggle('active');
+            document.getElementById('navbarLinks').classList.toggle('active');
+            document.getElementById('navbarRight').classList.toggle('active');
+            mobileMenuBtn.textContent = mobileMenuBtn.classList.contains('active') ? '✕' : '☰';
+        });
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', loadPlayerStats);
+</script>
 {% endblock %}
