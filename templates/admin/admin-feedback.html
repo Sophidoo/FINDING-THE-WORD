@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback Management - Admin Dashboard</title>
+    <link rel="stylesheet" href="/static/css/global.css">
+    <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body>
+    <div class="admin-layout">
+        <!-- Mobile Sidebar Toggle -->
+        <button class="mobile-sidebar-toggle" id="sidebarToggle">☰</button>
+        
+        <!-- Sidebar -->
+        <aside class="admin-sidebar" id="adminSidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">F</div>
+                <div>
+                    <div class="sidebar-title">Find the Word</div>
+                    <div class="sidebar-subtitle">Admin Panel</div>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Main</div>
+                    <a href="admin-dashboard.html" class="sidebar-link">
+                        <span class="sidebar-link-icon">📊</span>
+                        Dashboard
+                    </a>
+                </div>
+                
+                <div class="nav-section">
+                    <div class="nav-section-title">Management</div>
+                    <a href="admin-words.html" class="sidebar-link">
+                        <span class="sidebar-link-icon">📝</span>
+                        Words
+                    </a>
+                    <a href="admin-users.html" class="sidebar-link">
+                        <span class="sidebar-link-icon">👥</span>
+                        Users
+                    </a>
+                    <a href="admin-feedback.html" class="sidebar-link active">
+                        <span class="sidebar-link-icon">💬</span>
+                        Feedback
+                    </a>
+                </div>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <a href="login.html" class="sidebar-footer-link">
+                    <span class="sidebar-link-icon">🚪</span>
+                    Logout
+                </a>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="admin-main">
+            <!-- Header -->
+            <header class="admin-header">
+                <div class="admin-header-left">
+                    <h1>💬 Feedback Management</h1>
+                    <p>View and manage user feedback</p>
+                </div>
+                <div class="admin-header-right">
+                    <div class="admin-user-badge">
+                        <div class="admin-avatar">A</div>
+                        <span class="admin-name">Admin</span>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-card-icon">💬</div>
+                    <div class="stat-card-value" id="totalFeedback">0</div>
+                    <div class="stat-card-label">Total Feedback</div>
+                </div>
+                <div class="stat-card primary">
+                    <div class="stat-card-icon">📬</div>
+                    <div class="stat-card-value" id="unreadFeedback">0</div>
+                    <div class="stat-card-label">Unread</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-icon">✅</div>
+                    <div class="stat-card-value" id="readFeedback">0</div>
+                    <div class="stat-card-label">Read</div>
+                </div>
+            </div>
+            
+            <!-- Filter Controls -->
+            <div class="filter-controls">
+                <div class="filter-group">
+                    <label>Status:</label>
+                    <select class="filter-select" id="filterStatus" onchange="filterFeedback()">
+                        <option value="">All Status</option>
+                        <option value="unread">Unread</option>
+                        <option value="read">Read</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <input type="text" class="search-input" id="searchFeedback" placeholder="Search feedback..." oninput="filterFeedback()">
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="markAllAsRead()">
+                    ✅ Mark All as Read
+                </button>
+            </div>
+            
+            <!-- Feedback List -->
+            <div class="admin-panel">
+                <div class="panel-header">
+                    <h2>📨 User Feedback</h2>
+                    <span id="feedbackCount">0 messages</span>
+                </div>
+                <div class="panel-body" id="feedbackContainer">
+                    <!-- Feedback cards will be loaded here -->
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Feedback Detail Modal -->
+    <div class="admin-modal" id="feedbackModal">
+        <div class="admin-modal-content">
+            <div class="admin-modal-header">
+                <h3>📨 Feedback Details</h3>
+                <button class="modal-close" onclick="closeFeedbackModal()">&times;</button>
+            </div>
+            <div class="admin-modal-body" id="feedbackModalBody">
+                <!-- Feedback details will be loaded here -->
+            </div>
+            <div class="admin-modal-footer">
+                <button class="btn btn-secondary" onclick="closeFeedbackModal()">Close</button>
+                <button class="btn btn-danger" onclick="deleteFeedback()">Delete</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Delete Confirmation Modal -->
+    <div class="admin-modal" id="deleteModal">
+        <div class="admin-modal-content" style="max-width: 400px;">
+            <div class="admin-modal-header">
+                <h3>⚠️ Delete Feedback</h3>
+                <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+            </div>
+            <div class="admin-modal-body">
+                <p style="text-align: center; font-size: 1rem;">
+                    Are you sure you want to delete this feedback?
+                </p>
+                <p style="text-align: center; color: #666; font-size: 0.9rem;">
+                    This action cannot be undone.
+                </p>
+            </div>
+            <div class="admin-modal-footer">
+                <button class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+                <button class="btn btn-danger" onclick="confirmDelete()">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let feedback = [];
+        let selectedFeedbackId = null;
+        let deletingFeedbackId = null;
+        
+        // Load feedback from localStorage
+        function loadFeedback() {
+            feedback = JSON.parse(localStorage.getItem('adminFeedback')) || [];
+            updateStats();
+            renderFeedback(feedback);
+        }
+        
+        // Update statistics
+        function updateStats() {
+            const total = feedback.length;
+            const unread = feedback.filter(f => f.status === 'unread').length;
+            const read = feedback.filter(f => f.status === 'read').length;
+            
+            document.getElementById('totalFeedback').textContent = total;
+            document.getElementById('unreadFeedback').textContent = unread;
+            document.getElementById('readFeedback').textContent = read;
+        }
+        
+        // Render feedback cards
+        function renderFeedback(feedbackToRender) {
+            const container = document.getElementById('feedbackContainer');
+            const feedbackCount = document.getElementById('feedbackCount');
+            
+            feedbackCount.textContent = `${feedbackToRender.length} messages`;
+            
+            if (feedbackToRender.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <h3>No Feedback Found</h3>
+                        <p>No feedback matches your filter criteria.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Sort by date (newest first) and unread first
+            const sortedFeedback = [...feedbackToRender].sort((a, b) => {
+                if (a.status === 'unread' && b.status !== 'unread') return -1;
+                if (a.status !== 'unread' && b.status === 'unread') return 1;
+                return new Date(b.submittedDate) - new Date(a.submittedDate);
+            });
+            
+            container.innerHTML = sortedFeedback.map(fb => `
+                <div class="feedback-card ${fb.status === 'unread' ? 'unread' : ''}" 
+                     onclick="viewFeedback(${fb.id})" 
+                     style="cursor: pointer; ${fb.status === 'unread' ? 'border-left: 4px solid #22c55e;' : ''}">
+                    <div class="feedback-header">
+                        <div class="feedback-user">
+                            <h4>${fb.name}</h4>
+                            <p>${fb.email}</p>
+                        </div>
+                        <div class="feedback-meta">
+                            <span class="badge ${fb.status === 'unread' ? 'badge-unread' : 'badge-read'}">${fb.status}</span>
+                            <div class="feedback-date">${fb.submittedDate}</div>
+                        </div>
+                    </div>
+                    <div class="feedback-subject">${fb.subject}</div>
+                    <div class="feedback-message" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                        ${fb.message}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Filter feedback
+        function filterFeedback() {
+            const status = document.getElementById('filterStatus').value;
+            const search = document.getElementById('searchFeedback').value.toLowerCase();
+            
+            let filtered = feedback;
+            
+            if (status) {
+                filtered = filtered.filter(f => f.status === status);
+            }
+            
+            if (search) {
+                filtered = filtered.filter(f => 
+                    f.name.toLowerCase().includes(search) || 
+                    f.email.toLowerCase().includes(search) ||
+                    f.subject.toLowerCase().includes(search) ||
+                    f.message.toLowerCase().includes(search)
+                );
+            }
+            
+            renderFeedback(filtered);
+        }
+        
+        // View feedback detail
+        function viewFeedback(id) {
+            const fb = feedback.find(f => f.id === id);
+            if (!fb) return;
+            
+            selectedFeedbackId = id;
+            
+            // Mark as read
+            if (fb.status === 'unread') {
+                fb.status = 'read';
+                localStorage.setItem('adminFeedback', JSON.stringify(feedback));
+                updateStats();
+                filterFeedback(); // Re-render with current filters
+            }
+            
+            const modalBody = document.getElementById('feedbackModalBody');
+            modalBody.innerHTML = `
+                <div style="margin-bottom: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                        <div>
+                            <h4 style="font-size: 1.1rem; font-weight: 900; margin: 0 0 0.25rem 0;">${fb.name}</h4>
+                            <p style="color: #666; font-size: 0.9rem; margin: 0;">${fb.email}</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <span class="badge ${fb.status === 'unread' ? 'badge-unread' : 'badge-read'}">${fb.status}</span>
+                            <div style="font-size: 0.8rem; color: #666; margin-top: 0.25rem;">${fb.submittedDate}</div>
+                        </div>
+                    </div>
+                    <div style="font-size: 1.1rem; font-weight: 700; padding: 0.75rem 0; border-top: 2px solid #e0e0e0; border-bottom: 2px solid #e0e0e0;">
+                        ${fb.subject}
+                    </div>
+                </div>
+                <div style="background: #f8f8f8; padding: 1.25rem; border: 2px solid #e0e0e0; line-height: 1.7;">
+                    ${fb.message}
+                </div>
+            `;
+            
+            document.getElementById('feedbackModal').classList.add('show');
+        }
+        
+        // Mark all as read
+        function markAllAsRead() {
+            feedback.forEach(fb => {
+                fb.status = 'read';
+            });
+            localStorage.setItem('adminFeedback', JSON.stringify(feedback));
+            loadFeedback();
+        }
+        
+        // Delete feedback (from modal)
+        function deleteFeedback() {
+            if (selectedFeedbackId) {
+                deletingFeedbackId = selectedFeedbackId;
+                closeFeedbackModal();
+                document.getElementById('deleteModal').classList.add('show');
+            }
+        }
+        
+        // Confirm delete
+        function confirmDelete() {
+            feedback = feedback.filter(f => f.id !== deletingFeedbackId);
+            localStorage.setItem('adminFeedback', JSON.stringify(feedback));
+            closeDeleteModal();
+            loadFeedback();
+        }
+        
+        // Close modals
+        function closeFeedbackModal() {
+            document.getElementById('feedbackModal').classList.remove('show');
+            selectedFeedbackId = null;
+        }
+        
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.remove('show');
+            deletingFeedbackId = null;
+        }
+        
+        // Sidebar toggle for mobile
+        function initSidebarToggle() {
+            const toggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('adminSidebar');
+            
+            toggle.addEventListener('click', () => {
+                sidebar.classList.toggle('active');
+                toggle.textContent = sidebar.classList.contains('active') ? '✕' : '☰';
+            });
+        }
+        
+        // Close modal on outside click
+        document.getElementById('feedbackModal').addEventListener('click', (e) => {
+            if (e.target.id === 'feedbackModal') closeFeedbackModal();
+        });
+        
+        document.getElementById('deleteModal').addEventListener('click', (e) => {
+            if (e.target.id === 'deleteModal') closeDeleteModal();
+        });
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFeedback();
+            initSidebarToggle();
+        });
+    </script>
+</body>
+</html>
