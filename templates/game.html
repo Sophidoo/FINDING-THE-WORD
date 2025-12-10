@@ -445,6 +445,11 @@
                             <strong>Example:</strong> "${word.example}"
                         </p>
                     ` : ''}
+                    ${word.trivia ? `
+                        <p style="margin-top:1rem;color:#b0ff9d;">
+                            <strong>Do you know:</strong> "${word.trivia}"
+                        </p>
+                    ` : ''}
                 </div>
             `;
 

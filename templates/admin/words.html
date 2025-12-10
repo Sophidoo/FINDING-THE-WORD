@@ -24,7 +24,7 @@
 <div class="filter-controls">
     <div class="filter-group">
         <label>Category:</label>
-        <select class="filter-select" id="filterCategory" onchange="filterWords()">
+        <select class="filter-select" id="filterCategory" onchange="loadWords()">
             <option value="">All Categories</option>
             <option value="animals">Animals</option>
             <option value="nature">Nature</option>
@@ -37,7 +37,7 @@
     </div>
     <div class="filter-group">
         <label>Difficulty:</label>
-        <select class="filter-select" id="filterDifficulty" onchange="filterWords()">
+        <select class="filter-select" id="filterDifficulty" onchange="loadWords()">
             <option value="">All Difficulties</option>
             <option value="easy">Easy</option>
             <option value="medium">Medium</option>
@@ -45,7 +45,7 @@
         </select>
     </div>
     <div class="filter-group">
-        <input type="text" class="search-input" id="searchWord" placeholder="Search words..." oninput="filterWords()">
+        <input type="text" class="search-input" id="searchWord" placeholder="Search words..." onchange="handleSearch()">
     </div>
 </div>
 
@@ -53,7 +53,7 @@
 <div class="admin-panel">
     <div class="panel-header">
         <h2>📚 Word Library</h2>
-        <span id="wordCount">0 words</span>
+        <span id="wordCount">Loading...</span>
     </div>
     <div class="panel-body">
         <table class="data-table" id="wordsTable">
@@ -75,6 +75,12 @@
             <div class="empty-state-icon">📭</div>
             <h3>No Words Found</h3>
             <p>No words match your filter criteria.</p>
+        </div>
+
+        <div id="paginationControls" style="margin-top: 20px; display: flex; justify-content: center; gap: 10px;">
+            <button class="btn btn-secondary btn-sm" id="prevPageBtn" onclick="changePage(-1)">Previous</button>
+            <span id="pageInfo" style="align-self: center;">Page 1</span>
+            <button class="btn btn-secondary btn-sm" id="nextPageBtn" onclick="changePage(1)">Next</button>
         </div>
     </div>
 </div>
@@ -113,16 +119,7 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="categoryInput">Category *</label>
-                        <select id="categoryInput" required>
-                            <option value="">Select Category</option>
-                            <option value="animals">Animals</option>
-                            <option value="nature">Nature</option>
-                            <option value="technology">Technology</option>
-                            <option value="food">Food</option>
-                            <option value="sports">Sports</option>
-                            <option value="colors">Colors</option>
-                            <option value="objects">Objects</option>
-                        </select>
+                        <input type="text" name="category" id="categoryInput" required>
                     </div>
                     
                     <div class="form-group">
@@ -152,7 +149,7 @@
             <button class="modal-close" onclick="closeViewModal()">&times;</button>
         </div>
         <div class="admin-modal-body" id="viewModalBody">
-            <!-- Word details will be loaded here -->
+            <p>Loading...</p>
         </div>
         <div class="admin-modal-footer">
             <button class="btn btn-secondary" onclick="closeViewModal()">Close</button>
@@ -186,13 +183,70 @@
 {% block scripts %}
     <script>
         let words = [];
+        let currentPage = 1;
+        let totalPages = 1;
         let editingWordId = null;
         let deletingWordId = null;
+        let viewingWordId = null;
         
         // Load words from localStorage
-        function loadWords() {
-            words = JSON.parse(localStorage.getItem('adminWords')) || [];
-            renderWords(words);
+        async function loadWords() {
+            const category = document.getElementById('filterCategory').value;
+            const difficulty = document.getElementById('filterDifficulty').value;
+            
+            let url = `/api/words?page=${currentPage}&per_page=15`;
+            if (category) url += `&category=${category}`;
+            if (difficulty) url += `&difficulty=${difficulty}`;
+
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                
+                words = data.words;
+                totalPages = data.pages;
+                
+                document.getElementById('pageInfo').textContent = `Page ${data.current_page} of ${data.pages}`;
+                document.getElementById('prevPageBtn').disabled = data.current_page <= 1;
+                document.getElementById('nextPageBtn').disabled = data.current_page >= data.pages;
+
+                renderWords(words);
+            } catch (err) {
+                console.error("Error loading words:", err);
+                Swal.fire('Error', 'Failed to load words', 'error');
+            }
+        }
+
+        async function handleSearch() {
+            const query = document.getElementById('searchWord').value.trim();
+            if (!query) {
+                loadWords(); // Reload all if search cleared
+                return;
+            }
+
+            try {
+                // Your API uses exact match search
+                const res = await fetch(`/api/words/search?word=${query}`);
+                if (!res.ok) throw new Error('Word not found');
+                
+                const word = await res.json();
+                renderWords([word]); // Render array with single result
+                
+                document.getElementById('pageInfo').textContent = "Search Result";
+                document.getElementById('prevPageBtn').disabled = true;
+                document.getElementById('nextPageBtn').disabled = true;
+            } catch (err) {
+                document.getElementById('wordsTableBody').innerHTML = '';
+                document.getElementById('emptyState').style.display = 'block';
+                document.getElementById('wordsTable').style.display = 'none';
+                document.getElementById('wordCount').textContent = "0 words";
+            }
+        }
+
+        function changePage(delta) {
+            if (currentPage + delta > 0 && currentPage + delta <= totalPages) {
+                currentPage += delta;
+                loadWords();
+            }
         }
         
         // Render words to table
@@ -201,7 +255,7 @@
             const emptyState = document.getElementById('emptyState');
             const wordCount = document.getElementById('wordCount');
             
-            wordCount.textContent = `${wordsToRender.length} words`;
+            wordCount.textContent = `${wordsToRender.length} words shown`;
             
             if (wordsToRender.length === 0) {
                 tbody.innerHTML = '';
@@ -216,8 +270,8 @@
             tbody.innerHTML = wordsToRender.map(word => `
                 <tr>
                     <td><strong style="cursor: pointer; color: #22c55e;" onclick="viewWord(${word.id})">${word.word}</strong></td>
-                    <td class="text-truncate">${word.definition}</td>
-                    <td>${capitalizeFirst(word.category)}</td>
+                    <td class="text-truncate" style="max-width: 200px;">${word.definition || '-'}</td>
+                    <td>${capitalizeFirst(word.category || 'General')}</td>
                     <td><span class="badge badge-${word.difficulty}">${capitalizeFirst(word.difficulty)}</span></td>
                     <td>
                         <div class="table-actions">
@@ -229,31 +283,71 @@
                 </tr>
             `).join('');
         }
-        
-        // Filter words
-        function filterWords() {
-            const category = document.getElementById('filterCategory').value;
-            const difficulty = document.getElementById('filterDifficulty').value;
-            const search = document.getElementById('searchWord').value.toLowerCase();
+
+        // --- ACTIONS (ADD / EDIT / DELETE) ---
+        async function saveWord() {
+            const wordInput = document.getElementById('wordInput').value.trim();
+            const definition = document.getElementById('definitionInput').value.trim();
+            const category = document.getElementById('categoryInput').value;
+            const difficulty = document.getElementById('difficultyInput').value;
+            const example = document.getElementById('exampleInput').value;
+            const trivia = document.getElementById('triviaInput').value;
             
-            let filtered = words;
-            
-            if (category) {
-                filtered = filtered.filter(w => w.category === category);
+            if (!wordInput || !definition || !category || !difficulty) {
+                Swal.fire('Error', 'Please fill in all required fields.', 'warning');
+                return;
             }
-            
-            if (difficulty) {
-                filtered = filtered.filter(w => w.difficulty === difficulty);
+
+            const payload = {
+                word: wordInput,
+                definition: definition,
+                category: category,
+                difficulty: difficulty,
+                example: example,
+                trivia: trivia
+                // Example/Trivia omitted as not in DB model provided
+            };
+
+            const url = editingWordId ? `/api/words/${editingWordId}` : '/api/words/';
+            const method = editingWordId ? 'PUT' : 'POST';
+
+            try {
+                const res = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    Swal.fire('Success', data.message, 'success');
+                    closeModal();
+                    loadWords();
+                } else {
+                    throw new Error(data.error || 'Failed to save');
+                }
+            } catch (err) {
+                Swal.fire('Error', err.message, 'error');
             }
-            
-            if (search) {
-                filtered = filtered.filter(w => 
-                    w.word.toLowerCase().includes(search) || 
-                    w.definition.toLowerCase().includes(search)
-                );
+        }
+
+        async function confirmDelete() {
+            if (!deletingWordId) return;
+
+            try {
+                const res = await fetch(`/api/words/${deletingWordId}`, { method: 'DELETE' });
+                const data = await res.json();
+
+                if (res.ok) {
+                    Swal.fire('Deleted!', data.message, 'success');
+                    closeDeleteModal();
+                    loadWords();
+                } else {
+                    throw new Error(data.error || 'Failed to delete');
+                }
+            } catch (err) {
+                Swal.fire('Error', err.message, 'error');
             }
-            
-            renderWords(filtered);
         }
         
         // Open add modal
@@ -265,192 +359,121 @@
         }
         
         // Edit word
-        function editWord(id) {
-            const word = words.find(w => w.id === id);
-            if (!word) return;
-            
+        async function editWord(id) {
             editingWordId = id;
             document.getElementById('modalTitle').textContent = 'Edit Word';
-            document.getElementById('wordInput').value = word.word;
-            document.getElementById('definitionInput').value = word.definition;
-            document.getElementById('exampleInput').value = word.example;
-            document.getElementById('triviaInput').value = word.trivia || '';
-            document.getElementById('categoryInput').value = word.category;
-            document.getElementById('difficultyInput').value = word.difficulty;
-            document.getElementById('wordModal').classList.add('show');
+            
+            try {
+                const res = await fetch(`/api/words/${id}`);
+                const word = await res.json();
+
+                document.getElementById('wordInput').value = word.word;
+                document.getElementById('definitionInput').value = word.definition;
+                document.getElementById('categoryInput').value = word.category;
+                document.getElementById('difficultyInput').value = word.difficulty;
+                document.getElementById('exampleInput').value = word.example;
+                document.getElementById('triviaInput').value = word.trivia;
+                
+                document.getElementById('wordModal').classList.add('show');
+            } catch (err) {
+                Swal.fire('Error', 'Could not fetch word details', 'error');
+            }
         }
-        
-        // Save word
-        function saveWord() {
-            const wordInput = document.getElementById('wordInput').value.trim().toUpperCase();
-            const definition = document.getElementById('definitionInput').value.trim();
-            const example = document.getElementById('exampleInput').value.trim();
-            const trivia = document.getElementById('triviaInput').value.trim();
-            const category = document.getElementById('categoryInput').value;
-            const difficulty = document.getElementById('difficultyInput').value;
-            
-            // Validation
-            if (!wordInput || !definition || !example || !category || !difficulty) {
-                alert('Please fill in all required fields.');
-                return;
+
+        async function viewWord(id) {
+            viewingWordId = id;
+            const modalBody = document.getElementById('viewModalBody');
+            modalBody.innerHTML = '<p>Loading...</p>';
+            document.getElementById('viewModal').classList.add('show');
+
+            try {
+                const res = await fetch(`/api/words/${id}`);
+                const word = await res.json();
+
+                modalBody.innerHTML = `
+                    <div style="margin-bottom: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h2 style="font-size: 1.75rem; font-weight: 900; margin: 0;">${word.word}</h2>
+                            <div>
+                                <span class="badge badge-${word.difficulty}">${capitalizeFirst(word.difficulty)}</span>
+                                <span class="badge" style="background: #f8f8f8; color: #000; border-color: #000; margin-left: 0.5rem;">${capitalizeFirst(word.category)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="background: #f8f8f8; border: 2px solid #000; padding: 1.25rem; margin-bottom: 1rem;">
+                        <div style="font-weight: 900; text-transform: uppercase; font-size: 0.8rem; color: #666; margin-bottom: 0.5rem;">📖 Definition</div>
+                        <p style="margin: 0; line-height: 1.6;">${word.definition}</p>
+                    </div>
+                    
+                    <div style="background: #f8f8f8; border: 2px solid #000; padding: 1.25rem; margin-bottom: 1rem;">
+                        <div style="font-weight: 900; text-transform: uppercase; font-size: 0.8rem; color: #666; margin-bottom: 0.5rem;">💬 Example Usage</div>
+                        <p style="margin: 0; line-height: 1.6; font-style: italic;">"${word.example}"</p>
+                    </div>
+                    
+                    ${word.trivia ? `
+                    <div style="background: #22c55e15; border: 2px solid #22c55e; padding: 1.25rem;">
+                        <div style="font-weight: 900; text-transform: uppercase; font-size: 0.8rem; color: #22c55e; margin-bottom: 0.5rem;">💡 Trivia</div>
+                        <p style="margin: 0; line-height: 1.6;">${word.trivia}</p>
+                    </div>
+                    ` : `
+                    <div style="background: #f0f0f0; border: 2px solid #e0e0e0; padding: 1.25rem; text-align: center; color: #999;">
+                        <em>No trivia available for this word.</em>
+                    </div>
+                    `}
+                `;
+            } catch (err) {
+                modalBody.innerHTML = '<p class="text-red-500">Failed to load word details.</p>';
             }
-            
-            if (editingWordId) {
-                // Update existing word
-                const index = words.findIndex(w => w.id === editingWordId);
-                if (index !== -1) {
-                    words[index] = {
-                        ...words[index],
-                        word: wordInput,
-                        definition,
-                        example,
-                        trivia,
-                        category,
-                        difficulty
-                    };
-                }
-            } else {
-                // Add new word
-                const newWord = {
-                    id: Date.now(),
-                    word: wordInput,
-                    definition,
-                    example,
-                    trivia,
-                    category,
-                    difficulty
-                };
-                words.push(newWord);
-            }
-            
-            // Save to localStorage
-            localStorage.setItem('adminWords', JSON.stringify(words));
-            
-            closeModal();
-            loadWords();
         }
         
         // Delete word
         function deleteWord(id) {
+            // Find word in local list just to get the name for the prompt
             const word = words.find(w => w.id === id);
-            if (!word) return;
-            
             deletingWordId = id;
-            document.getElementById('deleteWordName').textContent = word.word;
+            document.getElementById('deleteWordName').textContent = word ? word.word : 'this word';
             document.getElementById('deleteModal').classList.add('show');
         }
-        
-        // Confirm delete
-        function confirmDelete() {
-            words = words.filter(w => w.id !== deletingWordId);
-            localStorage.setItem('adminWords', JSON.stringify(words));
-            closeDeleteModal();
-            loadWords();
-        }
-        
-        // Close modals
+
         function closeModal() {
             document.getElementById('wordModal').classList.remove('show');
             editingWordId = null;
         }
-        
+
+        function closeViewModal() {
+            document.getElementById('viewModal').classList.remove('show');
+            viewingWordId = null;
+        }
+
         function closeDeleteModal() {
             document.getElementById('deleteModal').classList.remove('show');
             deletingWordId = null;
         }
         
-        // Helper function
-        function capitalizeFirst(str) {
-            return str.charAt(0).toUpperCase() + str.slice(1);
-        }
-        
-        // Sidebar toggle for mobile
-        function initSidebarToggle() {
-            const toggle = document.getElementById('sidebarToggle');
-            const sidebar = document.getElementById('adminSidebar');
-            
-            toggle.addEventListener('click', () => {
-                sidebar.classList.toggle('active');
-                toggle.textContent = sidebar.classList.contains('active') ? '✕' : '☰';
-            });
-        }
-        
-        // View word details
-        let viewingWordId = null;
-        
-        function viewWord(id) {
-            const word = words.find(w => w.id === id);
-            if (!word) return;
-            
-            viewingWordId = id;
-            
-            const modalBody = document.getElementById('viewModalBody');
-            modalBody.innerHTML = `
-                <div style="margin-bottom: 1.5rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                        <h2 style="font-size: 1.75rem; font-weight: 900; margin: 0;">${word.word}</h2>
-                        <div>
-                            <span class="badge badge-${word.difficulty}">${capitalizeFirst(word.difficulty)}</span>
-                            <span class="badge" style="background: #f8f8f8; color: #000; border-color: #000; margin-left: 0.5rem;">${capitalizeFirst(word.category)}</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div style="background: #f8f8f8; border: 2px solid #000; padding: 1.25rem; margin-bottom: 1rem;">
-                    <div style="font-weight: 900; text-transform: uppercase; font-size: 0.8rem; color: #666; margin-bottom: 0.5rem;">📖 Definition</div>
-                    <p style="margin: 0; line-height: 1.6;">${word.definition}</p>
-                </div>
-                
-                <div style="background: #f8f8f8; border: 2px solid #000; padding: 1.25rem; margin-bottom: 1rem;">
-                    <div style="font-weight: 900; text-transform: uppercase; font-size: 0.8rem; color: #666; margin-bottom: 0.5rem;">💬 Example Usage</div>
-                    <p style="margin: 0; line-height: 1.6; font-style: italic;">"${word.example}"</p>
-                </div>
-                
-                ${word.trivia ? `
-                <div style="background: #22c55e15; border: 2px solid #22c55e; padding: 1.25rem;">
-                    <div style="font-weight: 900; text-transform: uppercase; font-size: 0.8rem; color: #22c55e; margin-bottom: 0.5rem;">💡 Trivia</div>
-                    <p style="margin: 0; line-height: 1.6;">${word.trivia}</p>
-                </div>
-                ` : `
-                <div style="background: #f0f0f0; border: 2px solid #e0e0e0; padding: 1.25rem; text-align: center; color: #999;">
-                    <em>No trivia available for this word.</em>
-                </div>
-                `}
-            `;
-            
-            document.getElementById('viewModal').classList.add('show');
-        }
-        
-        function closeViewModal() {
-            document.getElementById('viewModal').classList.remove('show');
-            viewingWordId = null;
-        }
-        
-        // Edit from view modal
         document.getElementById('editFromViewBtn').addEventListener('click', () => {
             if (viewingWordId) {
                 closeViewModal();
                 editWord(viewingWordId);
             }
         });
-        
-        // Close modal on outside click
-        document.getElementById('wordModal').addEventListener('click', (e) => {
-            if (e.target.id === 'wordModal') closeModal();
+
+        // Close on outside click
+        document.querySelectorAll('.admin-modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.classList.remove('show');
+            });
         });
+
         
-        document.getElementById('viewModal').addEventListener('click', (e) => {
-            if (e.target.id === 'viewModal') closeViewModal();
-        });
-        
-        document.getElementById('deleteModal').addEventListener('click', (e) => {
-            if (e.target.id === 'deleteModal') closeDeleteModal();
-        });
-        
+        function capitalizeFirst(str) {
+            if (!str) return '';
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             loadWords();
-            initSidebarToggle();
         });
     </script>
 

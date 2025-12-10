@@ -83,6 +83,8 @@ def add_word():
     word = Word(
         word=data['word'].upper(),
         definition=data.get('definition', ''),
+        example=data.get('example', ''),
+        trivia=data.get('trivia', ''),
         difficulty=data.get('difficulty', 'easy'),
         length=len(data['word']),
         category=data.get('category', 'general')
@@ -115,6 +117,10 @@ def update_word(word_id):
         word.difficulty = data['difficulty']
     if 'category' in data:
         word.category = data['category']
+    if 'example' in data:
+        word.example = data['example']
+    if 'trivia' in data:
+        word.trivia = data['trivia']
 
     db.session.commit()
 
