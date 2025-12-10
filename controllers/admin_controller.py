@@ -1,4 +1,4 @@
-from flask import request, jsonify
+from flask import request, jsonify, render_template
 from flask_login import login_required, current_user
 from models.user import User
 from models.word import Word
@@ -22,6 +22,8 @@ def admin_required(f):
 
 @login_required
 @admin_required
+@login_required
+@admin_required
 def admin_dashboard():
     """Get admin dashboard statistics"""
     # User statistics
@@ -34,6 +36,10 @@ def admin_dashboard():
 
     # Word statistics
     total_words = Word.query.count()
+    # --- NEW: Get counts by difficulty ---
+    easy_count = Word.query.filter_by(difficulty='easy').count()
+    medium_count = Word.query.filter_by(difficulty='medium').count()
+    hard_count = Word.query.filter_by(difficulty='hard').count()
 
     # Score statistics
     total_scores = Score.query.count()
@@ -51,7 +57,10 @@ def admin_dashboard():
             'completion_rate': f"{(completed_games / total_games) * 100:.1f}%" if total_games > 0 else "0%"
         },
         'words': {
-            'total': total_words
+            'total': total_words,
+            'easy': easy_count,     # Added
+            'medium': medium_count, # Added
+            'hard': hard_count      # Added
         },
         'scores': {
             'total': total_scores,
@@ -59,7 +68,21 @@ def admin_dashboard():
         }
     })
 
+def dashboard():
+    # In the future, we will fetch words here: words = Word.query.all()
+    return render_template('admin/dashboard.html')
 
+def manage_words():
+    # In the future, we will fetch words here: words = Word.query.all()
+    return render_template('admin/words.html')
+
+def manage_users():
+    # In the future, we will fetch users here: users = User.query.all()
+    return render_template('admin/users.html')
+
+def manage_feedback():
+    # In the future: feedback = Feedback.query.all()
+    return render_template('admin/feedback.html')
 
 @login_required
 @admin_required

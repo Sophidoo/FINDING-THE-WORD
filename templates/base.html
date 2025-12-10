@@ -235,7 +235,7 @@
 <body>
 
     <!-- Flash Messages -->
-    <div class="container mt-3">
+    <!-- <div class="container mt-3">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -246,7 +246,7 @@
                 {% endfor %}
             {% endif %}
         {% endwith %}
-    </div>
+    </div> -->
 
     <!-- Main Content -->
     <main>
@@ -349,6 +349,27 @@
                 }
             }
         }
+    </script>
+    <script>
+        // Check if there are any flash messages from Flask
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    // Map Flask categories to SweetAlert icons
+                    // Flask: 'danger' -> SweetAlert: 'error'
+                    // Flask: 'success' -> SweetAlert: 'success'
+                    // Flask: 'warning' -> SweetAlert: 'warning'
+                    
+                    Swal.fire({
+                        title: "{{ 'Error!' if category == 'danger' else 'Success!' }}",
+                        text: "{{ message }}",
+                        icon: "{{ 'error' if category == 'danger' else category }}",
+                        confirmButtonColor: '#000000', // Matches your black theme
+                        confirmButtonText: 'OK'
+                    });
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
     </script>
 
     {% block scripts %}{% endblock %}

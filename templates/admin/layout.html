@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Panel{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+    <div class="admin-layout">
+        <button class="mobile-sidebar-toggle" id="sidebarToggle">☰</button>
+        
+        <aside class="admin-sidebar" id="adminSidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">F</div>
+                <div>
+                    <div class="sidebar-title">Find the Word</div>
+                    <div class="sidebar-subtitle">Admin Panel</div>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Main</div>
+                    <a href="/admin/dashboard" class="sidebar-link {% if active_page == 'dashboard' %}active{% endif %}">
+                        <span class="sidebar-link-icon">📊</span> Dashboard
+                    </a>
+                </div>
+                
+                <div class="nav-section">
+                    <div class="nav-section-title">Management</div>
+                    <a href="/admin/words" class="sidebar-link {% if active_page == 'words' %}active{% endif %}">
+                        <span class="sidebar-link-icon">📝</span> Words
+                    </a>
+                    <a href="/admin/users" class="sidebar-link {% if active_page == 'users' %}active{% endif %}">
+                        <span class="sidebar-link-icon">👥</span> Users
+                    </a>
+                    <a href="/admin/feedback" class="sidebar-link {% if active_page == 'feedback' %}active{% endif %}">
+                        <span class="sidebar-link-icon">💬</span> Feedback
+                    </a>
+                </div>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <a href="#" onclick="logout()" class="sidebar-footer-link">
+                    <span class="sidebar-link-icon">🚪</span> Logout
+                </a>
+            </div>
+        </aside>
+        
+        <main class="admin-main">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <script>
+        // Sidebar Toggle
+        const toggle = document.getElementById('sidebarToggle');
+        const sidebar = document.getElementById('adminSidebar');
+        if(toggle && sidebar) {
+            toggle.addEventListener('click', () => {
+                sidebar.classList.toggle('active');
+                toggle.textContent = sidebar.classList.contains('active') ? '✕' : '☰';
+            });
+        }
+
+        async function logout() {
+            await fetch('/api/auth/logout', { method: 'POST' });
+            window.location.href = '/login';
+        }
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

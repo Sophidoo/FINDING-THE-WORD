@@ -1,10 +1,189 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
 
-</body>
-</html>
+{% extends "admin/layout.html" %}
+
+{% block title %}Dashboard - Find the Word{% endblock %}
+
+{% block header_title %}📊 Dashboard Overview{% endblock %}
+{% block header_subtitle %}Welcome back! Here is what's happening.{% endblock %}
+
+{% block content %}
+<header class="admin-header">
+    <div class="admin-header-left">
+        <h1>📊 Dashboard Overview</h1>
+        <p>Welcome back, Admin! Here's what's happening.</p>
+    </div>
+    <div class="admin-header-right">
+        <div class="admin-user-badge">
+            <div class="admin-avatar">A</div>
+            <span class="admin-name">Admin</span>
+        </div>
+    </div>
+</header>
+<div class="stats-grid">
+    <div class="stat-card primary">
+        <div class="stat-card-icon">📝</div>
+        <div class="stat-card-value" id="totalWords"></div>
+        <div class="stat-card-label">Total Words</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-icon">👥</div>
+        <div class="stat-card-value" id="totalUsers"></div>
+        <div class="stat-card-label">Total Users</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-icon">📃</div>
+        <div class="stat-card-value" id="avgScore"></div>
+        <div class="stat-card-label">Average Score</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-icon">🔥</div>
+        <div class="stat-card-value" id="totalGames"></div>
+        <div class="stat-card-label">Total Games</div>
+    </div>
+</div>
+
+<div class="admin-panel">
+    <div class="panel-header">
+        <h2>⚡ Quick Actions</h2>
+    </div>
+    <div class="panel-body">
+        <div class="quick-links-grid">
+            <a href="{{ url_for('adminBlueprint.manage_words') }}" class="quick-link-card">
+                <span class="quick-link-icon">📝</span>
+                <span class="quick-link-label">Manage Words</span>
+            </a>
+            <a href="{{ url_for('adminBlueprint.manage_users') }}" class="quick-link-card">
+                <span class="quick-link-icon">👤</span>
+                <span class="quick-link-label">Manage Users</span>
+            </a>
+            <a href="{{ url_for('adminBlueprint.manage_feedback') }}" class="quick-link-card">
+                <span class="quick-link-icon">📨</span>
+                <span class="quick-link-label">View Feedback</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="admin-panel">
+    <div class="panel-header">
+        <h2>📈 Words by Difficulty</h2>
+    </div>
+    <div class="panel-body">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-card-icon">🟢</div>
+                <div class="stat-card-value" id="totalEasy"></div>
+                <div class="stat-card-label">Easy Words</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-icon">🟡</div>
+                <div class="stat-card-value" id="totalMedium">}</div>
+                <div class="stat-card-label">Medium Words</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-icon">🔴</div>
+                <div class="stat-card-value" id="totalHard"></div>
+                <div class="stat-card-label">Hard Words</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="admin-panel">
+    <div class="panel-header">
+        <h2>🕐 Recent Feedback</h2>
+        <a href="/admin/feedback" class="btn btn-secondary btn-sm">View All</a>
+    </div>
+    <div class="panel-body" id="recentFeedback">
+        <div class="empty-state">
+            <p>Loading feedback...</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+    <script>
+        
+        // Load dashboard stats
+        async function loadDashboardStats() {
+            try {
+                // Fetch from your Python API
+                const res = await fetch('/admin/api/stats');
+                const data = await res.json();
+                console.log(data)
+                
+                if (res.ok) {
+                    // Update the DOM with real numbers
+                    document.getElementById('totalWords').textContent = data.words.total;
+                    document.getElementById('totalEasy').textContent = data.words.easy;
+                    document.getElementById('totalMedium').textContent = data.words.medium;
+                    document.getElementById('totalHard').textContent = data.words.hard;
+                    document.getElementById('totalUsers').textContent = data.users.total;
+                    document.getElementById('totalGames').textContent = data.games.total;
+                    document.getElementById('avgScore').textContent = data.scores.average_score;
+                }
+            } catch (err) {
+                console.error("Failed to load stats", err);
+            }
+        }
+        
+        // Load recent feedback
+        async function loadRecentFeedback() {
+            const container = document.getElementById('recentFeedback');
+            try {
+                // Fetch only the first page, limiting to recent items
+                const res = await fetch('/admin/api/feedback-list?page=1&per_page=3'); 
+                const data = await res.json();
+                console.log(data)
+                
+                // Your controller returns { 'feedback': [...], 'total': ... }
+                const feedbackList = data.feedback; 
+
+                if (feedbackList.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📭</div>
+                            <h3>No Recent Feedback</h3>
+                            <p>Feedback from users will appear here.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Map the data to your HTML structure
+                container.innerHTML = feedbackList.map(fb => {
+                    // Format date nicely
+                    const date = new Date(fb.submitted_at).toLocaleDateString();
+                    const statusClass = fb.status === 'unread' || fb.status === 'new' ? 'badge-unread' : 'badge-read';
+                    
+                    return `
+                        <div class="feedback-card">
+                            <div class="feedback-header">
+                                <div class="feedback-user">
+                                    <h4>${fb.username}</h4>
+                                    <p>${fb.email}</p>
+                                </div>
+                                <div class="feedback-meta">
+                                    <span class="badge ${statusClass}">${fb.status}</span>
+                                    <div class="feedback-date">${date}</div>
+                                </div>
+                            </div>
+                            <div class="feedback-subject">${fb.subject}</div>
+                            <div class="feedback-message" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${fb.message}</div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (err) {
+                console.error("Failed to load feedback", err);
+                container.innerHTML = `<p style="text-align:center; color:red;">Failed to load feedback.</p>`;
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDashboardStats();
+            loadRecentFeedback();
+        });
+    </script>
+{% endblock %}

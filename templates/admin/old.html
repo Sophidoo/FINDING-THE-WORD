@@ -1,0 +1,66 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Dashboard - Find the Word{% endblock %}
+
+{% block content %}
+<header class="admin-header">
+    <div class="admin-header-left">
+        <h1>📊 Dashboard Overview</h1>
+        <p>Welcome back, Admin!</p>
+    </div>
+    <div class="admin-header-right">
+        <div class="admin-user-badge">
+            <div class="admin-avatar">A</div>
+            <span class="admin-name">{{ current_user.username }}</span>
+        </div>
+    </div>
+</header>
+
+<div class="stats-grid">
+    <div class="stat-card primary">
+        <div class="stat-card-icon">📝</div>
+        <div class="stat-card-value" id="totalWords">...</div>
+        <div class="stat-card-label">Total Words</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-icon">👥</div>
+        <div class="stat-card-value" id="totalUsers">...</div>
+        <div class="stat-card-label">Total Users</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-icon">🎮</div>
+        <div class="stat-card-value" id="totalGames">...</div>
+        <div class="stat-card-label">Games Played</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-icon">💯</div>
+        <div class="stat-card-value" id="avgScore">...</div>
+        <div class="stat-card-label">Average Score</div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function loadStats() {
+        try {
+            // Fetch from your Python API
+            const res = await fetch('/admin/api/stats');
+            const data = await res.json();
+            
+            if (res.ok) {
+                // Update the DOM with real numbers
+                document.getElementById('totalWords').textContent = data.words.total;
+                document.getElementById('totalUsers').textContent = data.users.total;
+                document.getElementById('totalGames').textContent = data.games.total;
+                document.getElementById('avgScore').textContent = data.scores.average_score;
+            }
+        } catch (err) {
+            console.error("Failed to load stats", err);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadStats);
+</script>
+{% endblock %}

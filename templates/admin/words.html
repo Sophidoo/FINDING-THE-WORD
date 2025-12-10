@@ -1,10 +1,457 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
 
-</body>
-</html>
+{% extends "admin/layout.html" %}
+
+{% block title %}Dashboard - Find the Word{% endblock %}
+
+{% block header_title %}📊 Dashboard Words{% endblock %}
+{% block header_subtitle %}Welcome back! Here is what's happening.{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<header class="admin-header">
+    <div class="admin-header-left">
+        <h1>📝 Words Management</h1>
+        <p>Add, edit, and manage game words</p>
+    </div>
+    <div class="admin-header-right">
+        <button class="btn btn-primary" onclick="openAddModal()">
+            ➕ Add New Word
+        </button>
+    </div>
+</header>
+
+<!-- Filter Controls -->
+<div class="filter-controls">
+    <div class="filter-group">
+        <label>Category:</label>
+        <select class="filter-select" id="filterCategory" onchange="filterWords()">
+            <option value="">All Categories</option>
+            <option value="animals">Animals</option>
+            <option value="nature">Nature</option>
+            <option value="technology">Technology</option>
+            <option value="food">Food</option>
+            <option value="sports">Sports</option>
+            <option value="colors">Colors</option>
+            <option value="objects">Objects</option>
+        </select>
+    </div>
+    <div class="filter-group">
+        <label>Difficulty:</label>
+        <select class="filter-select" id="filterDifficulty" onchange="filterWords()">
+            <option value="">All Difficulties</option>
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+        </select>
+    </div>
+    <div class="filter-group">
+        <input type="text" class="search-input" id="searchWord" placeholder="Search words..." oninput="filterWords()">
+    </div>
+</div>
+
+<!-- Words Table -->
+<div class="admin-panel">
+    <div class="panel-header">
+        <h2>📚 Word Library</h2>
+        <span id="wordCount">0 words</span>
+    </div>
+    <div class="panel-body">
+        <table class="data-table" id="wordsTable">
+            <thead>
+                <tr>
+                    <th>Word</th>
+                    <th>Definition</th>
+                    <th>Category</th>
+                    <th>Difficulty</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="wordsTableBody">
+                <!-- Words will be loaded here -->
+            </tbody>
+        </table>
+        
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <div class="empty-state-icon">📭</div>
+            <h3>No Words Found</h3>
+            <p>No words match your filter criteria.</p>
+        </div>
+    </div>
+</div>
+    
+<!-- Add/Edit Word Modal -->
+<div class="admin-modal" id="wordModal">
+    <div class="admin-modal-content">
+        <div class="admin-modal-header">
+            <h3 id="modalTitle">Add New Word</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="admin-modal-body">
+            <form id="wordForm">
+                <input type="hidden" id="wordId">
+                
+                <div class="form-group">
+                    <label for="wordInput">Word *</label>
+                    <input type="text" id="wordInput" placeholder="Enter the word" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="definitionInput">Definition *</label>
+                    <textarea id="definitionInput" placeholder="Enter the definition" required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="exampleInput">Example Usage *</label>
+                    <textarea id="exampleInput" placeholder="Enter an example sentence" required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="triviaInput">Trivia</label>
+                    <textarea id="triviaInput" placeholder="Enter fun facts or trivia (optional)"></textarea>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="categoryInput">Category *</label>
+                        <select id="categoryInput" required>
+                            <option value="">Select Category</option>
+                            <option value="animals">Animals</option>
+                            <option value="nature">Nature</option>
+                            <option value="technology">Technology</option>
+                            <option value="food">Food</option>
+                            <option value="sports">Sports</option>
+                            <option value="colors">Colors</option>
+                            <option value="objects">Objects</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="difficultyInput">Difficulty *</label>
+                        <select id="difficultyInput" required>
+                            <option value="">Select Difficulty</option>
+                            <option value="easy">Easy (3-4 letters)</option>
+                            <option value="medium">Medium (5-6 letters)</option>
+                            <option value="hard">Hard (7+ letters)</option>
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="admin-modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveWord()">Save Word</button>
+        </div>
+    </div>
+</div>
+
+<!-- View Word Details Modal -->
+<div class="admin-modal" id="viewModal">
+    <div class="admin-modal-content">
+        <div class="admin-modal-header">
+            <h3>📖 Word Details</h3>
+            <button class="modal-close" onclick="closeViewModal()">&times;</button>
+        </div>
+        <div class="admin-modal-body" id="viewModalBody">
+            <!-- Word details will be loaded here -->
+        </div>
+        <div class="admin-modal-footer">
+            <button class="btn btn-secondary" onclick="closeViewModal()">Close</button>
+            <button class="btn btn-primary" id="editFromViewBtn">Edit Word</button>
+        </div>
+    </div>
+</div>
+    
+<!-- Delete Confirmation Modal -->
+<div class="admin-modal" id="deleteModal">
+    <div class="admin-modal-content" style="max-width: 400px;">
+        <div class="admin-modal-header">
+            <h3>⚠️ Delete Word</h3>
+            <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+        </div>
+        <div class="admin-modal-body">
+            <p style="text-align: center; font-size: 1rem;">
+                Are you sure you want to delete "<strong id="deleteWordName"></strong>"?
+            </p>
+            <p style="text-align: center; color: #666; font-size: 0.9rem;">
+                This action cannot be undone.
+            </p>
+        </div>
+        <div class="admin-modal-footer">
+            <button class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+            <button class="btn btn-danger" onclick="confirmDelete()">Delete</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+    <script>
+        let words = [];
+        let editingWordId = null;
+        let deletingWordId = null;
+        
+        // Load words from localStorage
+        function loadWords() {
+            words = JSON.parse(localStorage.getItem('adminWords')) || [];
+            renderWords(words);
+        }
+        
+        // Render words to table
+        function renderWords(wordsToRender) {
+            const tbody = document.getElementById('wordsTableBody');
+            const emptyState = document.getElementById('emptyState');
+            const wordCount = document.getElementById('wordCount');
+            
+            wordCount.textContent = `${wordsToRender.length} words`;
+            
+            if (wordsToRender.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.style.display = 'block';
+                document.getElementById('wordsTable').style.display = 'none';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            document.getElementById('wordsTable').style.display = 'table';
+            
+            tbody.innerHTML = wordsToRender.map(word => `
+                <tr>
+                    <td><strong style="cursor: pointer; color: #22c55e;" onclick="viewWord(${word.id})">${word.word}</strong></td>
+                    <td class="text-truncate">${word.definition}</td>
+                    <td>${capitalizeFirst(word.category)}</td>
+                    <td><span class="badge badge-${word.difficulty}">${capitalizeFirst(word.difficulty)}</span></td>
+                    <td>
+                        <div class="table-actions">
+                            <button class="action-btn" onclick="viewWord(${word.id})" title="View Details">👁️</button>
+                            <button class="action-btn edit" onclick="editWord(${word.id})" title="Edit">✏️</button>
+                            <button class="action-btn delete" onclick="deleteWord(${word.id})" title="Delete">🗑️</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        // Filter words
+        function filterWords() {
+            const category = document.getElementById('filterCategory').value;
+            const difficulty = document.getElementById('filterDifficulty').value;
+            const search = document.getElementById('searchWord').value.toLowerCase();
+            
+            let filtered = words;
+            
+            if (category) {
+                filtered = filtered.filter(w => w.category === category);
+            }
+            
+            if (difficulty) {
+                filtered = filtered.filter(w => w.difficulty === difficulty);
+            }
+            
+            if (search) {
+                filtered = filtered.filter(w => 
+                    w.word.toLowerCase().includes(search) || 
+                    w.definition.toLowerCase().includes(search)
+                );
+            }
+            
+            renderWords(filtered);
+        }
+        
+        // Open add modal
+        function openAddModal() {
+            editingWordId = null;
+            document.getElementById('modalTitle').textContent = 'Add New Word';
+            document.getElementById('wordForm').reset();
+            document.getElementById('wordModal').classList.add('show');
+        }
+        
+        // Edit word
+        function editWord(id) {
+            const word = words.find(w => w.id === id);
+            if (!word) return;
+            
+            editingWordId = id;
+            document.getElementById('modalTitle').textContent = 'Edit Word';
+            document.getElementById('wordInput').value = word.word;
+            document.getElementById('definitionInput').value = word.definition;
+            document.getElementById('exampleInput').value = word.example;
+            document.getElementById('triviaInput').value = word.trivia || '';
+            document.getElementById('categoryInput').value = word.category;
+            document.getElementById('difficultyInput').value = word.difficulty;
+            document.getElementById('wordModal').classList.add('show');
+        }
+        
+        // Save word
+        function saveWord() {
+            const wordInput = document.getElementById('wordInput').value.trim().toUpperCase();
+            const definition = document.getElementById('definitionInput').value.trim();
+            const example = document.getElementById('exampleInput').value.trim();
+            const trivia = document.getElementById('triviaInput').value.trim();
+            const category = document.getElementById('categoryInput').value;
+            const difficulty = document.getElementById('difficultyInput').value;
+            
+            // Validation
+            if (!wordInput || !definition || !example || !category || !difficulty) {
+                alert('Please fill in all required fields.');
+                return;
+            }
+            
+            if (editingWordId) {
+                // Update existing word
+                const index = words.findIndex(w => w.id === editingWordId);
+                if (index !== -1) {
+                    words[index] = {
+                        ...words[index],
+                        word: wordInput,
+                        definition,
+                        example,
+                        trivia,
+                        category,
+                        difficulty
+                    };
+                }
+            } else {
+                // Add new word
+                const newWord = {
+                    id: Date.now(),
+                    word: wordInput,
+                    definition,
+                    example,
+                    trivia,
+                    category,
+                    difficulty
+                };
+                words.push(newWord);
+            }
+            
+            // Save to localStorage
+            localStorage.setItem('adminWords', JSON.stringify(words));
+            
+            closeModal();
+            loadWords();
+        }
+        
+        // Delete word
+        function deleteWord(id) {
+            const word = words.find(w => w.id === id);
+            if (!word) return;
+            
+            deletingWordId = id;
+            document.getElementById('deleteWordName').textContent = word.word;
+            document.getElementById('deleteModal').classList.add('show');
+        }
+        
+        // Confirm delete
+        function confirmDelete() {
+            words = words.filter(w => w.id !== deletingWordId);
+            localStorage.setItem('adminWords', JSON.stringify(words));
+            closeDeleteModal();
+            loadWords();
+        }
+        
+        // Close modals
+        function closeModal() {
+            document.getElementById('wordModal').classList.remove('show');
+            editingWordId = null;
+        }
+        
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.remove('show');
+            deletingWordId = null;
+        }
+        
+        // Helper function
+        function capitalizeFirst(str) {
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+        
+        // Sidebar toggle for mobile
+        function initSidebarToggle() {
+            const toggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('adminSidebar');
+            
+            toggle.addEventListener('click', () => {
+                sidebar.classList.toggle('active');
+                toggle.textContent = sidebar.classList.contains('active') ? '✕' : '☰';
+            });
+        }
+        
+        // View word details
+        let viewingWordId = null;
+        
+        function viewWord(id) {
+            const word = words.find(w => w.id === id);
+            if (!word) return;
+            
+            viewingWordId = id;
+            
+            const modalBody = document.getElementById('viewModalBody');
+            modalBody.innerHTML = `
+                <div style="margin-bottom: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h2 style="font-size: 1.75rem; font-weight: 900; margin: 0;">${word.word}</h2>
+                        <div>
+                            <span class="badge badge-${word.difficulty}">${capitalizeFirst(word.difficulty)}</span>
+                            <span class="badge" style="background: #f8f8f8; color: #000; border-color: #000; margin-left: 0.5rem;">${capitalizeFirst(word.category)}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="background: #f8f8f8; border: 2px solid #000; padding: 1.25rem; margin-bottom: 1rem;">
+                    <div style="font-weight: 900; text-transform: uppercase; font-size: 0.8rem; color: #666; margin-bottom: 0.5rem;">📖 Definition</div>
+                    <p style="margin: 0; line-height: 1.6;">${word.definition}</p>
+                </div>
+                
+                <div style="background: #f8f8f8; border: 2px solid #000; padding: 1.25rem; margin-bottom: 1rem;">
+                    <div style="font-weight: 900; text-transform: uppercase; font-size: 0.8rem; color: #666; margin-bottom: 0.5rem;">💬 Example Usage</div>
+                    <p style="margin: 0; line-height: 1.6; font-style: italic;">"${word.example}"</p>
+                </div>
+                
+                ${word.trivia ? `
+                <div style="background: #22c55e15; border: 2px solid #22c55e; padding: 1.25rem;">
+                    <div style="font-weight: 900; text-transform: uppercase; font-size: 0.8rem; color: #22c55e; margin-bottom: 0.5rem;">💡 Trivia</div>
+                    <p style="margin: 0; line-height: 1.6;">${word.trivia}</p>
+                </div>
+                ` : `
+                <div style="background: #f0f0f0; border: 2px solid #e0e0e0; padding: 1.25rem; text-align: center; color: #999;">
+                    <em>No trivia available for this word.</em>
+                </div>
+                `}
+            `;
+            
+            document.getElementById('viewModal').classList.add('show');
+        }
+        
+        function closeViewModal() {
+            document.getElementById('viewModal').classList.remove('show');
+            viewingWordId = null;
+        }
+        
+        // Edit from view modal
+        document.getElementById('editFromViewBtn').addEventListener('click', () => {
+            if (viewingWordId) {
+                closeViewModal();
+                editWord(viewingWordId);
+            }
+        });
+        
+        // Close modal on outside click
+        document.getElementById('wordModal').addEventListener('click', (e) => {
+            if (e.target.id === 'wordModal') closeModal();
+        });
+        
+        document.getElementById('viewModal').addEventListener('click', (e) => {
+            if (e.target.id === 'viewModal') closeViewModal();
+        });
+        
+        document.getElementById('deleteModal').addEventListener('click', (e) => {
+            if (e.target.id === 'deleteModal') closeDeleteModal();
+        });
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadWords();
+            initSidebarToggle();
+        });
+    </script>
+
+{% endblock %}

@@ -43,6 +43,7 @@ def create_app():
     from routes.main_bp import mainBlueprint
     from routes.words_bp import wordsBlueprint
     from routes.achievement_bp import achievementBlueprint
+    from routes.admin_bp import adminBlueprint
 
     app.register_blueprint(mainBlueprint, url_prefix="/")
     app.register_blueprint(authBlueprint, url_prefix="/api/auth")
@@ -51,6 +52,7 @@ def create_app():
     app.register_blueprint(gameBlueprint, url_prefix="/api/game")  # Fixed typo
     app.register_blueprint(wordsBlueprint, url_prefix="/api/words")  # Fixed typo
     app.register_blueprint(achievementBlueprint, url_prefix="/api/achievements")  # Fixed typo
+    app.register_blueprint(adminBlueprint, url_prefix="/admin")
 
     @app.cli.command("init-db")
     def init_db_command():
