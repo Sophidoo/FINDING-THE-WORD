@@ -192,9 +192,9 @@
     }
     async function loadPlayerStats() {
         try {
-            const stats = await apiCall('/api/leaderboard/user-stats');
+            const stats = await apiCall('/api/auth/profile');
             console.log(stats)
-            document.getElementById('playerUsername').textContent = stats.username || 'Guest';
+            document.getElementById('playerUsername').textContent = stats?.username || 'Guest';
             document.getElementById('playerLogo').textContent = stats.username.trim().charAt(0).toUpperCase() || 'P';
 
         } catch (err) {
@@ -284,16 +284,6 @@
     document.getElementById('userInfoBtn').addEventListener('click', function() {
         window.location.href = '/profile';
     });
-
-    // Load saved username on page load
-    const savedStats = localStorage.getItem('findTheWordStats');
-    if (savedStats) {
-        const stats = JSON.parse(savedStats);
-        if (stats.username) {
-            document.querySelector('.user-name').textContent = stats.username;
-            document.querySelector('.user-avatar').textContent = stats.username.charAt(0).toUpperCase();
-        }
-    }
 
     // Mobile menu toggle
     const mobileMenuBtn = document.getElementById('mobileMenuBtn');

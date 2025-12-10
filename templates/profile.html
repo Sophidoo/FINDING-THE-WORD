@@ -1,34 +1,30 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile - Find the Word</title>
-    <link rel="stylesheet" href="/static/css/global.css">
-</head>
-<body>
-    <div class="profile-container">
+{% extends "base.html" %}
+{% block title %}Find the Word - Contact Us{% endblock %}
+
+
+{% block content %}
+     <div class="profile-container">
         <!-- Profile Header -->
         <header class="profile-header">
             <div class="profile-logo">
                 <div class="logo-box">F</div>
                 <h1 class="profile-title">MY PROFILE</h1>
             </div>
-            <button id="backToDashboard" class="back-btn">← BACK TO DASHBOARD</button>
+            <button id="backToDashboard" class="back-btn">← BACK TO GAME</button>
         </header>
 
         <!-- Profile Content -->
         <div class="profile-content">
             <!-- User Avatar Section -->
             <div class="profile-avatar-section">
-                <div class="profile-avatar-large">P</div>
-                <h2 id="profileDisplayName">Player</h2>
+                <div class="profile-avatar-large" id="playerLogo">P</div>
+                <h2 id="playerUsername">Player</h2>
             </div>
 
             <!-- Account Information -->
             <div class="profile-card">
                 <h3>ACCOUNT INFORMATION</h3>
-                
+
                 <!-- Username Section -->
                 <div class="profile-field">
                     <div class="field-header">
@@ -71,6 +67,10 @@
                 <h3>CHANGE PASSWORD</h3>
                 <form id="passwordForm">
                     <div class="form-group">
+                        <label for="currentPassword">Current Password</label>
+                        <input type="password" id="currentPassword" class="profile-input" placeholder="Enter current password" required>
+                    </div>
+                    <div class="form-group">
                         <label for="newPassword">New Password</label>
                         <input type="password" id="newPassword" class="profile-input" placeholder="Enter new password">
                     </div>
@@ -94,195 +94,214 @@
         <span id="notificationMessage"></span>
     </div>
 
+{% endblock %}
+
+{% block scripts %}
     <script>
-        // Load user data from localStorage
-        let userData = {
-            username: 'Player',
-            email: '',
-            password: ''
-        };
-
-        // Load player stats from localStorage
-        function loadUserData() {
-            const savedStats = localStorage.getItem('findTheWordStats');
-            if (savedStats) {
-                const stats = JSON.parse(savedStats);
-                userData.username = stats.username || 'Player';
-                userData.email = stats.email || '';
-            }
-            
-            // Load password separately (stored from login)
-            const savedPassword = localStorage.getItem('userPassword');
-            if (savedPassword) {
-                userData.password = savedPassword;
-            }
-            
-            updateProfileDisplay();
-        }
-
-        // Update profile display
-        function updateProfileDisplay() {
-            document.getElementById('profileDisplayName').textContent = userData.username;
-            document.getElementById('usernameValue').textContent = userData.username;
-            document.getElementById('emailValue').textContent = userData.email || 'Not set';
-            
-            // Update avatar
-            const avatarLetter = userData.username.charAt(0).toUpperCase();
-            document.querySelector('.profile-avatar-large').textContent = avatarLetter;
-        }
-
-        // Save user data to localStorage
-        function saveUserData() {
-            const savedStats = localStorage.getItem('findTheWordStats');
-            let stats = savedStats ? JSON.parse(savedStats) : {};
-            stats.username = userData.username;
-            stats.email = userData.email;
-            localStorage.setItem('findTheWordStats', JSON.stringify(stats));
-        }
-
-        // Show notification
-        function showNotification(message, isSuccess = true) {
-            const notification = document.getElementById('notificationAlert');
-            const messageEl = document.getElementById('notificationMessage');
-            
-            messageEl.textContent = message;
-            notification.classList.add('show');
-            notification.style.background = isSuccess ? '#22c55e' : '#ef4444';
-            
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
-        }
-
-        // Username editing
-        document.getElementById('editUsernameBtn').addEventListener('click', () => {
-            document.getElementById('usernameDisplay').classList.add('hidden');
-            document.getElementById('usernameEdit').classList.remove('hidden');
-            document.getElementById('usernameInput').value = userData.username;
-            document.getElementById('usernameInput').focus();
+    // === API Helper ===
+    async function apiCall(url, options = {}) {
+        const res = await fetch(url, {
+            method: options.method || 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            },
+            body: options.body ? JSON.stringify(options.body) : null,
+            credentials: 'include'
         });
 
-        document.getElementById('cancelUsernameBtn').addEventListener('click', () => {
-            document.getElementById('usernameDisplay').classList.remove('hidden');
-            document.getElementById('usernameEdit').classList.add('hidden');
-        });
+        const data = await res.json();
 
-        document.getElementById('saveUsernameBtn').addEventListener('click', () => {
-            const newUsername = document.getElementById('usernameInput').value.trim();
-            
-            if (!newUsername) {
-                showNotification('Username cannot be empty', false);
-                return;
-            }
-            
-            if (newUsername.length < 3) {
-                showNotification('Username must be at least 3 characters', false);
-                return;
-            }
-            
-            userData.username = newUsername;
-            saveUserData();
-            updateProfileDisplay();
-            
-            document.getElementById('usernameDisplay').classList.remove('hidden');
-            document.getElementById('usernameEdit').classList.add('hidden');
-            
+        if (!res.ok) {
+            // This throws the error message sent from Flask (e.g., "Username already exists")
+            throw new Error(data.error || data.message || 'Something went wrong');
+        }
+
+        return data;
+    }
+
+    // === UI Notification Helper ===
+    function showNotification(message, isSuccess = true) {
+        const notification = document.getElementById('notificationAlert');
+        const messageEl = document.getElementById('notificationMessage');
+
+        messageEl.textContent = message;
+        notification.classList.add('show');
+        notification.style.background = isSuccess ? '#22c55e' : '#ef4444'; // Green or Red
+
+        setTimeout(() => {
+            notification.classList.remove('show');
+        }, 3000);
+    }
+
+    // === Core Logic ===
+    async function loadPlayerStats() {
+        try {
+            const stats = await apiCall('/api/auth/profile');
+
+            // Update UI
+            document.getElementById('playerUsername').textContent = stats.username || 'Guest';
+            document.getElementById('usernameValue').textContent = stats.username || 'Guest';
+            document.getElementById('emailValue').textContent = stats.email || 'Not set';
+
+            // Update Avatar
+            const firstLetter = (stats.username || 'P').trim().charAt(0).toUpperCase();
+            document.getElementById('playerLogo').textContent = firstLetter;
+
+        } catch (err) {
+            console.error('Failed to load profile:', err);
+            showNotification('Failed to load profile data', false);
+        }
+    }
+
+    // === Username Editing ===
+    const usernameDisplay = document.getElementById('usernameDisplay');
+    const usernameEdit = document.getElementById('usernameEdit');
+
+    document.getElementById('editUsernameBtn').addEventListener('click', () => {
+        usernameDisplay.classList.add('hidden');
+        usernameEdit.classList.remove('hidden');
+        document.getElementById('usernameInput').value = document.getElementById('usernameValue').textContent;
+    });
+
+    document.getElementById('cancelUsernameBtn').addEventListener('click', () => {
+        usernameDisplay.classList.remove('hidden');
+        usernameEdit.classList.add('hidden');
+    });
+
+    document.getElementById('saveUsernameBtn').addEventListener('click', async () => {
+        const newUsername = document.getElementById('usernameInput').value.trim();
+
+        if (newUsername.length < 3) {
+            return showNotification('Username must be at least 3 characters', false);
+        }
+
+        try {
+            // Call Backend
+            await apiCall('/api/auth/profile/update', {
+                method: 'PUT',
+                body: { username: newUsername }
+            });
+
+            // Success
             showNotification('Username updated successfully!');
-        });
+            document.getElementById('usernameValue').textContent = newUsername;
+            document.getElementById('playerUsername').textContent = newUsername;
+            document.getElementById('playerLogo').textContent = newUsername.charAt(0).toUpperCase();
 
-        // Email editing
-        document.getElementById('editEmailBtn').addEventListener('click', () => {
-            document.getElementById('emailDisplay').classList.add('hidden');
-            document.getElementById('emailEdit').classList.remove('hidden');
-            document.getElementById('emailInput').value = userData.email;
-            document.getElementById('emailInput').focus();
-        });
+            // Close Edit Mode
+            usernameDisplay.classList.remove('hidden');
+            usernameEdit.classList.add('hidden');
 
-        document.getElementById('cancelEmailBtn').addEventListener('click', () => {
-            document.getElementById('emailDisplay').classList.remove('hidden');
-            document.getElementById('emailEdit').classList.add('hidden');
-        });
+        } catch (err) {
+            // Error handling (e.g., "Username already exists")
+            showNotification(err.message, false);
+        }
+    });
 
-        document.getElementById('saveEmailBtn').addEventListener('click', () => {
-            const newEmail = document.getElementById('emailInput').value.trim();
-            
-            if (newEmail && !validateEmail(newEmail)) {
-                showNotification('Please enter a valid email address', false);
-                return;
-            }
-            
-            userData.email = newEmail;
-            saveUserData();
-            updateProfileDisplay();
-            
-            document.getElementById('emailDisplay').classList.remove('hidden');
-            document.getElementById('emailEdit').classList.add('hidden');
-            
-            showNotification('Email updated successfully!');
-        });
+    // === Email Editing ===
+    const emailDisplay = document.getElementById('emailDisplay');
+    const emailEdit = document.getElementById('emailEdit');
 
-        // Email validation
-        function validateEmail(email) {
-            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            return re.test(email);
+    document.getElementById('editEmailBtn').addEventListener('click', () => {
+        emailDisplay.classList.add('hidden');
+        emailEdit.classList.remove('hidden');
+        document.getElementById('emailInput').value = document.getElementById('emailValue').textContent;
+    });
+
+    document.getElementById('cancelEmailBtn').addEventListener('click', () => {
+        emailDisplay.classList.remove('hidden');
+        emailEdit.classList.add('hidden');
+    });
+
+    document.getElementById('saveEmailBtn').addEventListener('click', async () => {
+        const newEmail = document.getElementById('emailInput').value.trim();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!emailRegex.test(newEmail)) {
+            return showNotification('Invalid email address', false);
         }
 
-        // Password change
-        document.getElementById('passwordForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            
-            const newPassword = document.getElementById('newPassword').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            
-            // Validate new password
-            if (!newPassword) {
-                showNotification('New password cannot be empty', false);
-                return;
-            }
-            
-            if (newPassword.length < 6) {
-                showNotification('Password must be at least 6 characters', false);
-                return;
-            }
-            
-            // Validate password confirmation
-            if (newPassword !== confirmPassword) {
-                showNotification('Passwords do not match', false);
-                return;
-            }
-            
-            // Save new password
-            userData.password = newPassword;
-            localStorage.setItem('userPassword', newPassword);
-            
-            // Clear form
-            document.getElementById('passwordForm').reset();
-            
-            showNotification('Password updated successfully!');
-        });
+        try {
+            // Call Backend
+            await apiCall('/api/auth/profile/update', {
+                method: 'PUT',
+                body: { email: newEmail }
+            });
 
-        // Back to dashboard
-        document.getElementById('backToDashboard').addEventListener('click', () => {
-            window.location.href = 'dashboard.html';
-        });
+            // Success
+            showNotification('Email updated successfully!');
+            document.getElementById('emailValue').textContent = newEmail;
 
-        // Logout functionality
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            // Clear all user data from localStorage
-            localStorage.removeItem('findTheWordStats');
-            localStorage.removeItem('userPassword');
-            
-            // Show notification
-            showNotification('Logging out...');
-            
-            // Redirect to login page after a short delay
-            setTimeout(() => {
-                window.location.href = 'index.html';
-            }, 1000);
-        });
+            // Close Edit Mode
+            emailDisplay.classList.remove('hidden');
+            emailEdit.classList.add('hidden');
 
-        // Initialize on load
-        loadUserData();
-    </script>
-</body>
-</html>
+        } catch (err) {
+            // Error handling (e.g., "Email already registered")
+            showNotification(err.message, false);
+        }
+    });
+
+    // === Password Change ===
+    document.getElementById('passwordForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const currentPassword = document.getElementById('currentPassword').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        if (newPassword !== confirmPassword) {
+            return showNotification('New passwords do not match', false);
+        }
+
+        if (newPassword.length < 6) {
+            return showNotification('Password must be at least 6 characters', false);
+        }
+
+        try {
+            await apiCall('/api/auth/profile/change-password', {
+                method: 'PUT',
+                body: {
+                    current_password: currentPassword,
+                    new_password: newPassword
+                }
+            });
+
+            showNotification('Password changed successfully!');
+            e.target.reset(); // Clear the form
+        } catch (err) {
+            showNotification(err.message, false); // e.g., "Current password is incorrect"
+        }
+    });
+
+    // === Navigation & Logout ===
+    document.getElementById('backToDashboard').addEventListener('click', () => {
+        window.location.href = '/game';
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+        try {
+            await apiCall('/api/auth/logout', { method: 'POST' });
+            window.location.href = '/login'; // Redirect to login page
+        } catch (err) {
+            console.error(err);
+            window.location.href = '/login'; // Force redirect anyway
+        }
+    });
+
+    // Mobile Menu
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    if (mobileMenuBtn) {
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenuBtn.classList.toggle('active');
+            document.getElementById('navbarLinks').classList.toggle('active');
+            document.getElementById('navbarRight').classList.toggle('active');
+            mobileMenuBtn.textContent = mobileMenuBtn.classList.contains('active') ? '✕' : '☰';
+        });
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', loadPlayerStats);
+</script>
+{% endblock %}

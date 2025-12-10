@@ -3,6 +3,8 @@ from flask_login import login_required, current_user
 from models.game import GameSession
 from utils.game_generator import generate_game_grid
 from database.db import db
+from utils.achievement_checker import check_and_unlock_achievements
+
 
 def get_levels():
     levels = [
@@ -125,6 +127,8 @@ def end_game():
 
     game_session.end_game()  # calls the method
     db.session.commit()
+    new_achievements = check_and_unlock_achievements(current_user)
+
 
     return jsonify({
         'message': 'Game completed!',
@@ -133,7 +137,8 @@ def end_game():
         'total_words': len(game_session.words),
         'time_limit': game_session.time_limit,
         'time_taken': game_session.time_taken,
-        'time_remaining': max(0, game_session.time_limit - (game_session.time_taken or 0))
+        'time_remaining': max(0, game_session.time_limit - (game_session.time_taken or 0)),
+        'new_achievements': new_achievements
     })
 
 
