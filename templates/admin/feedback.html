@@ -1,127 +1,74 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Feedback Management - Admin Dashboard</title>
-    <link rel="stylesheet" href="/static/css/global.css">
-    <link rel="stylesheet" href="/static/css/admin.css">
-</head>
-<body>
-    <div class="admin-layout">
-        <!-- Mobile Sidebar Toggle -->
-        <button class="mobile-sidebar-toggle" id="sidebarToggle">☰</button>
-        
-        <!-- Sidebar -->
-        <aside class="admin-sidebar" id="adminSidebar">
-            <div class="sidebar-header">
-                <div class="sidebar-logo">F</div>
-                <div>
-                    <div class="sidebar-title">Find the Word</div>
-                    <div class="sidebar-subtitle">Admin Panel</div>
-                </div>
+
+{% extends "admin/layout.html" %}
+
+{% block title %}Dashboard - Find the Word{% endblock %}
+
+{% block header_title %}📊 Dashboard Feedback{% endblock %}
+{% block header_subtitle %}Welcome back! Here is what's happening.{% endblock %}
+
+{% block content %}
+    <!-- Header -->
+    <header class="admin-header">
+        <div class="admin-header-left">
+            <h1>💬 Feedback Management</h1>
+            <p>View and manage user feedback</p>
+        </div>
+        <div class="admin-header-right">
+            <div class="admin-user-badge">
+                <div class="admin-avatar">A</div>
+                <span class="admin-name">Admin</span>
             </div>
-            
-            <nav class="sidebar-nav">
-                <div class="nav-section">
-                    <div class="nav-section-title">Main</div>
-                    <a href="admin-dashboard.html" class="sidebar-link">
-                        <span class="sidebar-link-icon">📊</span>
-                        Dashboard
-                    </a>
-                </div>
-                
-                <div class="nav-section">
-                    <div class="nav-section-title">Management</div>
-                    <a href="admin-words.html" class="sidebar-link">
-                        <span class="sidebar-link-icon">📝</span>
-                        Words
-                    </a>
-                    <a href="admin-users.html" class="sidebar-link">
-                        <span class="sidebar-link-icon">👥</span>
-                        Users
-                    </a>
-                    <a href="admin-feedback.html" class="sidebar-link active">
-                        <span class="sidebar-link-icon">💬</span>
-                        Feedback
-                    </a>
-                </div>
-            </nav>
-            
-            <div class="sidebar-footer">
-                <a href="login.html" class="sidebar-footer-link">
-                    <span class="sidebar-link-icon">🚪</span>
-                    Logout
-                </a>
-            </div>
-        </aside>
-        
-        <!-- Main Content -->
-        <main class="admin-main">
-            <!-- Header -->
-            <header class="admin-header">
-                <div class="admin-header-left">
-                    <h1>💬 Feedback Management</h1>
-                    <p>View and manage user feedback</p>
-                </div>
-                <div class="admin-header-right">
-                    <div class="admin-user-badge">
-                        <div class="admin-avatar">A</div>
-                        <span class="admin-name">Admin</span>
-                    </div>
-                </div>
-            </header>
-            
-            <!-- Stats -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-card-icon">💬</div>
-                    <div class="stat-card-value" id="totalFeedback">0</div>
-                    <div class="stat-card-label">Total Feedback</div>
-                </div>
-                <div class="stat-card primary">
-                    <div class="stat-card-icon">📬</div>
-                    <div class="stat-card-value" id="unreadFeedback">0</div>
-                    <div class="stat-card-label">Unread</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-card-icon">✅</div>
-                    <div class="stat-card-value" id="readFeedback">0</div>
-                    <div class="stat-card-label">Read</div>
-                </div>
-            </div>
-            
-            <!-- Filter Controls -->
-            <div class="filter-controls">
-                <div class="filter-group">
-                    <label>Status:</label>
-                    <select class="filter-select" id="filterStatus" onchange="filterFeedback()">
-                        <option value="">All Status</option>
-                        <option value="unread">Unread</option>
-                        <option value="read">Read</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <input type="text" class="search-input" id="searchFeedback" placeholder="Search feedback..." oninput="filterFeedback()">
-                </div>
-                <button class="btn btn-secondary btn-sm" onclick="markAllAsRead()">
-                    ✅ Mark All as Read
-                </button>
-            </div>
-            
-            <!-- Feedback List -->
-            <div class="admin-panel">
-                <div class="panel-header">
-                    <h2>📨 User Feedback</h2>
-                    <span id="feedbackCount">0 messages</span>
-                </div>
-                <div class="panel-body" id="feedbackContainer">
-                    <!-- Feedback cards will be loaded here -->
-                </div>
-            </div>
-        </main>
+        </div>
+    </header>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-card-icon">💬</div>
+            <div class="stat-card-value" id="totalFeedback">0</div>
+            <div class="stat-card-label">Total Feedback</div>
+        </div>
+        <div class="stat-card primary">
+            <div class="stat-card-icon">📬</div>
+            <div class="stat-card-value" id="unreadFeedback">0</div>
+            <div class="stat-card-label">Unread</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-icon">✅</div>
+            <div class="stat-card-value" id="readFeedback">0</div>
+            <div class="stat-card-label">Read</div>
+        </div>
     </div>
-    
+
+    <!-- Filter Controls -->
+    <div class="filter-controls">
+        <div class="filter-group">
+            <label>Status:</label>
+            <select class="filter-select" id="filterStatus" onchange="filterFeedback()">
+                <option value="">All Status</option>
+                <option value="unread">Unread</option>
+                <option value="read">Read</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <input type="text" class="search-input" id="searchFeedback" placeholder="Search feedback..." oninput="filterFeedback()">
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="markAllAsRead()">
+            ✅ Mark All as Read
+        </button>
+    </div>
+
+    <!-- Feedback List -->
+    <div class="admin-panel">
+        <div class="panel-header">
+            <h2>📨 User Feedback</h2>
+            <span id="feedbackCount">0 messages</span>
+        </div>
+        <div class="panel-body" id="feedbackContainer">
+            <!-- Feedback cards will be loaded here -->
+        </div>
+    </div>
+
     <!-- Feedback Detail Modal -->
     <div class="admin-modal" id="feedbackModal">
         <div class="admin-modal-content">
@@ -161,6 +108,8 @@
         </div>
     </div>
 
+{% endblock %}
+{% block scripts %}
     <script>
         let feedback = [];
         let selectedFeedbackId = null;
@@ -357,5 +306,5 @@
             initSidebarToggle();
         });
     </script>
-</body>
-</html>
+
+{% endblock %}

@@ -1,143 +1,90 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Users Management - Admin Dashboard</title>
-    <link rel="stylesheet" href="/static/css/global.css">
-    <link rel="stylesheet" href="/static/css/admin.css">
-</head>
-<body>
-    <div class="admin-layout">
-        <!-- Mobile Sidebar Toggle -->
-        <button class="mobile-sidebar-toggle" id="sidebarToggle">☰</button>
-        
-        <!-- Sidebar -->
-        <aside class="admin-sidebar" id="adminSidebar">
-            <div class="sidebar-header">
-                <div class="sidebar-logo">F</div>
-                <div>
-                    <div class="sidebar-title">Find the Word</div>
-                    <div class="sidebar-subtitle">Admin Panel</div>
-                </div>
+
+{% extends "admin/layout.html" %}
+
+{% block title %}Dashboard - Find the Word{% endblock %}
+
+{% block header_title %}📊 Dashboard Users{% endblock %}
+{% block header_subtitle %}Welcome back! Here is what's happening.{% endblock %}
+
+{% block content %}
+     <!-- Header -->
+    <header class="admin-header">
+        <div class="admin-header-left">
+            <h1>👥 Users Management</h1>
+            <p>Manage user accounts and permissions</p>
+        </div>
+        <div class="admin-header-right">
+            <div class="admin-user-badge">
+                <div class="admin-avatar">A</div>
+                <span class="admin-name">Admin</span>
             </div>
+        </div>
+    </header>
+    
+    <!-- Stats -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-card-icon">👥</div>
+            <div class="stat-card-value" id="totalUsers">0</div>
+            <div class="stat-card-label">Total Users</div>
+        </div>
+        <div class="stat-card primary">
+            <div class="stat-card-icon">👑</div>
+            <div class="stat-card-value" id="totalAdmins">0</div>
+            <div class="stat-card-label">Admins</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-icon">🎮</div>
+            <div class="stat-card-value" id="totalGamesPlayed">0</div>
+            <div class="stat-card-label">Games Played</div>
+        </div>
+    </div>
+    
+    <!-- Filter Controls -->
+    <div class="filter-controls">
+        <div class="filter-group">
+            <label>Role:</label>
+            <select class="filter-select" id="filterRole" onchange="filterUsers()">
+                <option value="">All Roles</option>
+                <option value="admin">Admin</option>
+                <option value="user">User</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <input type="text" class="search-input" id="searchUser" placeholder="Search users..." oninput="filterUsers()">
+        </div>
+    </div>
+    
+    <!-- Users Table -->
+    <div class="admin-panel">
+        <div class="panel-header">
+            <h2>👤 User Accounts</h2>
+            <span id="userCount">0 users</span>
+        </div>
+        <div class="panel-body">
+            <table class="data-table" id="usersTable">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Games Played</th>
+                        <th>Best Score</th>
+                        <th>Joined</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                    <!-- Users will be loaded here -->
+                </tbody>
+            </table>
             
-            <nav class="sidebar-nav">
-                <div class="nav-section">
-                    <div class="nav-section-title">Main</div>
-                    <a href="admin-dashboard.html" class="sidebar-link">
-                        <span class="sidebar-link-icon">📊</span>
-                        Dashboard
-                    </a>
-                </div>
-                
-                <div class="nav-section">
-                    <div class="nav-section-title">Management</div>
-                    <a href="admin-words.html" class="sidebar-link">
-                        <span class="sidebar-link-icon">📝</span>
-                        Words
-                    </a>
-                    <a href="admin-users.html" class="sidebar-link active">
-                        <span class="sidebar-link-icon">👥</span>
-                        Users
-                    </a>
-                    <a href="admin-feedback.html" class="sidebar-link">
-                        <span class="sidebar-link-icon">💬</span>
-                        Feedback
-                    </a>
-                </div>
-            </nav>
-            
-            <div class="sidebar-footer">
-                <a href="login.html" class="sidebar-footer-link">
-                    <span class="sidebar-link-icon">🚪</span>
-                    Logout
-                </a>
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <div class="empty-state-icon">👤</div>
+                <h3>No Users Found</h3>
+                <p>No users match your filter criteria.</p>
             </div>
-        </aside>
-        
-        <!-- Main Content -->
-        <main class="admin-main">
-            <!-- Header -->
-            <header class="admin-header">
-                <div class="admin-header-left">
-                    <h1>👥 Users Management</h1>
-                    <p>Manage user accounts and permissions</p>
-                </div>
-                <div class="admin-header-right">
-                    <div class="admin-user-badge">
-                        <div class="admin-avatar">A</div>
-                        <span class="admin-name">Admin</span>
-                    </div>
-                </div>
-            </header>
-            
-            <!-- Stats -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-card-icon">👥</div>
-                    <div class="stat-card-value" id="totalUsers">0</div>
-                    <div class="stat-card-label">Total Users</div>
-                </div>
-                <div class="stat-card primary">
-                    <div class="stat-card-icon">👑</div>
-                    <div class="stat-card-value" id="totalAdmins">0</div>
-                    <div class="stat-card-label">Admins</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-card-icon">🎮</div>
-                    <div class="stat-card-value" id="totalGamesPlayed">0</div>
-                    <div class="stat-card-label">Games Played</div>
-                </div>
-            </div>
-            
-            <!-- Filter Controls -->
-            <div class="filter-controls">
-                <div class="filter-group">
-                    <label>Role:</label>
-                    <select class="filter-select" id="filterRole" onchange="filterUsers()">
-                        <option value="">All Roles</option>
-                        <option value="admin">Admin</option>
-                        <option value="user">User</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <input type="text" class="search-input" id="searchUser" placeholder="Search users..." oninput="filterUsers()">
-                </div>
-            </div>
-            
-            <!-- Users Table -->
-            <div class="admin-panel">
-                <div class="panel-header">
-                    <h2>👤 User Accounts</h2>
-                    <span id="userCount">0 users</span>
-                </div>
-                <div class="panel-body">
-                    <table class="data-table" id="usersTable">
-                        <thead>
-                            <tr>
-                                <th>Username</th>
-                                <th>Email</th>
-                                <th>Role</th>
-                                <th>Games Played</th>
-                                <th>Best Score</th>
-                                <th>Joined</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="usersTableBody">
-                            <!-- Users will be loaded here -->
-                        </tbody>
-                    </table>
-                    
-                    <div class="empty-state" id="emptyState" style="display: none;">
-                        <div class="empty-state-icon">👤</div>
-                        <h3>No Users Found</h3>
-                        <p>No users match your filter criteria.</p>
-                    </div>
-                </div>
-            </div>
-        </main>
+        </div>
     </div>
     
     <!-- Role Change Modal -->
@@ -180,7 +127,8 @@
             </div>
         </div>
     </div>
-
+{% endblock %}
+{% block scripts %}
     <script>
         let users = [];
         let changingRoleUserId = null;
@@ -365,5 +313,4 @@
             initSidebarToggle();
         });
     </script>
-</body>
-</html>
+{% endblock %}
