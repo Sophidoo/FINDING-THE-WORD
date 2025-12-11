@@ -114,8 +114,11 @@ document.getElementById('signupForm').addEventListener('submit', async function(
             showConfirmButton: false
         });
 
-        // Redirect to game or dashboard
-        window.location.href = '/game';
+        if (data.user.is_admin) {
+            window.location.href = '/admin/dashboard';
+        } else {
+            window.location.href = '/game';
+        }
 
     } catch (error) {
         // ERROR
