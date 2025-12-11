@@ -43,7 +43,7 @@
                 <div class="stat-box"><div class="stat-box-value" id="totalGames">0</div><div class="stat-box-label">Total Games</div></div>
                 <div class="stat-box"><div class="stat-box-value" id="completedGames">0</div><div class="stat-box-label">Completed</div></div>
                 <div class="stat-box"><div class="stat-box-value" id="bestScore">0</div><div class="stat-box-label">Best Score</div></div>
-                <div class="stat-box"><div class="stat-box-value" id="avgScore">0</div><div class="stat-box-label">Avg Score</div></div>
+                <div class="stat-box"><div class="stat-box-value" id="avgScore">0</div><div class="stat-box-label">Total Points</div></div>
             </div>
             <div class="completion-rate horizontal">
                 <div class="completion-rate-label">
@@ -228,7 +228,7 @@
             );
             document.getElementById('bestScore').textContent = bestOverall;
 
-            document.getElementById('avgScore').textContent = Math.round(stats.average_score);
+            document.getElementById('avgScore').textContent = Math.round(stats.total_score);
 
             // Completion rate
             const completionRate = stats.completion_rate.replace('%', '');
