@@ -569,6 +569,73 @@ function updateTimerDisplay() {
     // Drag selection
     let selecting = false;
     let selected = [];
+    const gridContainer = document.getElementById('wordGrid');
+    gridContainer.addEventListener('mousedown', e => {
+        if (!e.target.classList.contains('grid-cell')) return;
+        e.preventDefault(); // Prevent text selection
+        startSelection(e.target);
+    });
+
+    gridContainer.addEventListener('mousemove', e => {
+        if (selecting && e.target.classList.contains('grid-cell')) {
+            addToSelection(e.target);
+        }
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (selecting) endSelection();
+    });
+
+    // 2. TOUCH EVENTS (Mobile)
+    gridContainer.addEventListener('touchstart', e => {
+        if (!e.target.classList.contains('grid-cell')) return;
+        e.preventDefault(); // Prevent scrolling while selecting
+        startSelection(e.target);
+    }, { passive: false });
+
+    gridContainer.addEventListener('touchmove', e => {
+        if (!selecting) return;
+        e.preventDefault(); // Stop screen scrolling
+        
+        // Get element under the finger
+        const touch = e.touches[0];
+        const target = document.elementFromPoint(touch.clientX, touch.clientY);
+        
+        if (target && target.classList.contains('grid-cell')) {
+            addToSelection(target);
+        }
+    }, { passive: false });
+
+    document.addEventListener('touchend', () => {
+        if (selecting) endSelection();
+    });
+
+    // --- HELPER FUNCTIONS ---
+    function startSelection(cell) {
+        selecting = true;
+        selected = [cell];
+        cell.classList.add('selected');
+    }
+    function addToSelection(cell) {
+        // Prevent duplicate selection of the same cell
+        if (!selected.includes(cell)) {
+            selected.push(cell);
+            cell.classList.add('selected');
+        }
+    }
+
+    function endSelection() {
+        selecting = false;
+        const word = selected.map(c => c.textContent).join('');
+        
+        // Basic validation before hitting API
+        if (word.length < 3) {
+            clearGridSelection();
+            selected = [];
+            return;
+        }
+        submitWord(word);
+    }
 
     document.getElementById('wordGrid').addEventListener('mousedown', e => {
         if (!e.target.classList.contains('grid-cell')) return;

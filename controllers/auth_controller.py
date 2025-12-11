@@ -24,7 +24,7 @@ def register():
 
     db.session.add(user)
     db.session.commit()
-
+    login_user(user, remember=True)
     return jsonify({
         'message': 'User created successfully',
         'user': {
