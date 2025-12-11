@@ -301,6 +301,7 @@
         if (achievementSection) achievementSection.style.display = 'block';
 
         loadPlayerStats();
+        renderDashboardAchievements();
     }
     function clearGridSelection() {
         document.querySelectorAll('.grid-cell.selected, .grid-cell.found').forEach(cell => {
@@ -441,12 +442,12 @@
                         ${word.definition || '<em>No definition available</em>'}
                     </p>
                     ${word.example ? `
-                        <p style="margin-top:1rem;color:#b0ff9d;">
+                        <p style="margin-top:1rem;color:#ddd;">
                             <strong>Example:</strong> "${word.example}"
                         </p>
                     ` : ''}
                     ${word.trivia ? `
-                        <p style="margin-top:1rem;color:#b0ff9d;">
+                        <p style="margin-top:1rem;color:#ddd;">
                             <strong>Do you know:</strong> "${word.trivia}"
                         </p>
                     ` : ''}
@@ -681,7 +682,9 @@ function updateTimerDisplay() {
 
                 if (result.new_achievements && result.new_achievements.length > 0) {
                     result.new_achievements.forEach(ach => {
-                        showAchievementNotification(ach); // Use your existing notification function
+                        setTimeout(() => {
+                            showAchievementNotification(ach);
+                        }, index * 2000);
                     });
                     renderDashboardAchievements();
                 }

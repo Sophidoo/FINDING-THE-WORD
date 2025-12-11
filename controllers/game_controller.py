@@ -67,21 +67,25 @@ def validate_word():
     # Check if already found
     found_words = game_session.found_words_list or []
     already_found = word in found_words
+    new_achievements = []
     if is_valid and not already_found:
         found_words.append(word)
         game_session.found_words_list = found_words
         db.session.commit()
 
         game_session.calculate_score()
+        new_achievements = check_and_unlock_achievements(current_user)
         print(game_session.score)
         print("score", game_session.calculate_score())
+        
     return jsonify({
         'valid': is_valid,
         'already_found': already_found,
         'found_count': len(found_words),
         'total_words': len(words_list),
         'score': game_session.score,
-        'time_limit': game_session.time_limit
+        'time_limit': game_session.time_limit,
+        'new_achievements': new_achievements
     })
 
 
