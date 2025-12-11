@@ -1,6 +1,7 @@
 from flask import Blueprint
 from controllers.main_controller import contact, index as mainIndex, game, leaderboard, login, register, profile
 
+
 mainBlueprint = Blueprint('mainBlueprint', __name__)
 
 mainBlueprint.route('/', methods=['GET'])(mainIndex)

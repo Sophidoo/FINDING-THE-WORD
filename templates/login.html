@@ -3,6 +3,25 @@
 {% block title %}Login{% endblock %}
 
 {% block content %}
+<nav class="navbar">
+    <a href="/" class="navbar-logo">
+        <div class="navbar-logo-letter">F</div>
+        <div class="navbar-logo-letter">I</div>
+        <div class="navbar-logo-letter">N</div>
+        <div class="navbar-logo-letter">D</div>
+    </a>
+    <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+    <div class="navbar-buttons" id="navbarButtons">
+        <a href="/contact" class="navbar-btn navbar-btn-primary">Contact Us</a>
+        {% if current_user.is_authenticated %}
+            <a href="javascript:void(0)" onclick="confirmLogout()" class="navbar-btn navbar-btn-secondary">
+                Logout
+            </a>
+        {% else %}
+            <a href="/login" class="navbar-btn navbar-btn-secondary">Login</a>
+        {% endif %}
+    </div>
+</nav>
 <div class="login-container">
         <div class="login-card">
             <div class="login-header">

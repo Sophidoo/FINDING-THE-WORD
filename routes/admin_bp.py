@@ -1,6 +1,6 @@
 from flask import Blueprint, redirect, url_for, flash
 from flask_login import login_required, current_user
-from controllers.admin_controller import admin_dashboard, get_users, get_user, toggle_admin, dashboard, delete_user, get_all_games, manage_feedback, manage_users, manage_words,  get_all_feedback
+from controllers.admin_controller import admin_dashboard, get_users, get_user, toggle_admin, dashboard, delete_user, get_all_games, manage_feedback, manage_users, manage_words,  get_all_feedback, delete_feedback, mark_all_feedback_read
 
 adminBlueprint = Blueprint('adminBlueprint', __name__)
 
@@ -23,3 +23,6 @@ adminBlueprint.route('/api/users/<int:user_id>/toggle-admin', methods=['PUT'])(t
 adminBlueprint.route('/api/users/<int:user_id>', methods=['DELETE'])(delete_user)
 adminBlueprint.route('/api/games', methods=['GET'])(get_all_games)
 adminBlueprint.route('/api/feedback-list', methods=['GET'])(get_all_feedback)
+adminBlueprint.route('/api/feedback-list', methods=['GET'])(get_all_feedback)
+adminBlueprint.route('/api/feedback/<int:feedback_id>', methods=['DELETE'])(delete_feedback) # New
+adminBlueprint.route('/api/feedback/mark-all-read', methods=['POST'])(mark_all_feedback_read)

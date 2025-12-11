@@ -32,7 +32,7 @@ def create_app():
     def load_user(user_id):
         return User.query.get(int(user_id))
 
-    login_manager.login_view = 'authBlueprint.login'  # optional but recommended
+    login_manager.login_view = 'mainBlueprint.login'  # optional but recommended
     login_manager.login_message_category = 'info'
 
     # Import and register blueprints inside create_app

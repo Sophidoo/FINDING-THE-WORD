@@ -81,13 +81,13 @@ def add_word():
         return jsonify({'error': 'Word already exists'}), 400
 
     word = Word(
-        word=data['word'].upper(),
+        word=data['word'].strip().upper(),
         definition=data.get('definition', ''),
         example=data.get('example', ''),
         trivia=data.get('trivia', ''),
         difficulty=data.get('difficulty', 'easy'),
         length=len(data['word']),
-        category=data.get('category', 'general')
+        category=data.get('category', 'general').strip().lower()
     )
 
     db.session.add(word)
@@ -109,14 +109,14 @@ def update_word(word_id):
     data = request.get_json()
 
     if 'word' in data:
-        word.word = data['word'].upper()
+        word.word = data['word'].strip().upper()
         word.length = len(data['word'])
     if 'definition' in data:
         word.definition = data['definition']
     if 'difficulty' in data:
         word.difficulty = data['difficulty']
     if 'category' in data:
-        word.category = data['category']
+        word.category = data['category'].strip().lower()
     if 'example' in data:
         word.example = data['example']
     if 'trivia' in data:

@@ -188,8 +188,48 @@
         let editingWordId = null;
         let deletingWordId = null;
         let viewingWordId = null;
+
+        async function loadCategories() {
+            try {
+                const res = await fetch('/api/words/categories');
+                const data = await res.json();
+                console.log(data)
+                
+                // We need to update TWO dropdowns:
+                // 1. The Filter Dropdown (top of page)
+                const filterSelect = document.getElementById('filterCategory');
+                // 2. The Form Dropdown (inside the modal)
+                const formSelect = document.getElementById('categoryInput');
+
+                // Clear current options (keep the first default one)
+                filterSelect.innerHTML = '<option value="">All Categories</option>';
+                formSelect.innerHTML = '<option value="">Select Category</option>';
+
+                // Helper to create options
+                data.categories.forEach(cat => {
+                    // Formatting: "animals" -> "Animals"
+                    const label = capitalizeFirst(cat); 
+                    
+                    // Add to Filter
+                    const filterOption = document.createElement('option');
+                    filterOption.value = cat;
+                    filterOption.textContent = label;
+                    filterSelect.appendChild(filterOption);
+
+                    // Add to Form
+                    const formOption = document.createElement('option');
+                    formOption.value = cat;
+                    formOption.textContent = label;
+                    formSelect.appendChild(formOption);
+                });
+
+                
+
+            } catch (err) {
+                console.error("Failed to load categories:", err);
+            }
+        }
         
-        // Load words from localStorage
         async function loadWords() {
             const category = document.getElementById('filterCategory').value;
             const difficulty = document.getElementById('filterDifficulty').value;
@@ -323,6 +363,7 @@
                     Swal.fire('Success', data.message, 'success');
                     closeModal();
                     loadWords();
+                    loadCategories();
                 } else {
                     throw new Error(data.error || 'Failed to save');
                 }
@@ -474,6 +515,7 @@
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             loadWords();
+            loadCategories();
         });
     </script>
 

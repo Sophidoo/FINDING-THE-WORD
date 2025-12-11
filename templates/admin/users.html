@@ -131,35 +131,60 @@
 {% block scripts %}
     <script>
         let users = [];
+        let currentPage = 1;
+        let totalPages = 1;
         let changingRoleUserId = null;
-        let newRole = null;
+        let changingRoleUserName = ""; // Store name for modal
         let deletingUserId = null;
-        
-        // Load users from localStorage
-        function loadUsers() {
-            users = JSON.parse(localStorage.getItem('adminUsers')) || [];
-            updateStats();
-            renderUsers(users);
+
+        async function loadStats() {
+            try {
+                const res = await fetch('/admin/api/stats');
+                const data = await res.json();
+                
+                if (res.ok) {
+                    document.getElementById('totalUsers').textContent = data.users.total;
+                    document.getElementById('totalAdmins').textContent = data.users.admins;
+                    
+                    // Assuming your stats API returns a total game count
+                    const totalGames = data.games ? data.games.total : 0;
+                    document.getElementById('totalGamesPlayed').textContent = totalGames;
+                }
+            } catch (err) {
+                console.error("Failed to load stats", err);
+            }
         }
         
-        // Update statistics
-        function updateStats() {
-            const totalUsers = users.length;
-            const totalAdmins = users.filter(u => u.role === 'admin').length;
-            const totalGamesPlayed = users.reduce((sum, u) => sum + (u.totalGames || 0), 0);
+        async function loadUsers() {
+            const role = document.getElementById('filterRole').value;
+            const search = document.getElementById('searchUser').value.trim();
             
-            document.getElementById('totalUsers').textContent = totalUsers;
-            document.getElementById('totalAdmins').textContent = totalAdmins;
-            document.getElementById('totalGamesPlayed').textContent = totalGamesPlayed;
+            let url = `/admin/api/users?page=${currentPage}&per_page=10`;
+            if (role) url += `&role=${role}`;
+            if (search) url += `&search=${encodeURIComponent(search)}`;
+
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                
+                users = data.users;
+                totalPages = data.pages;
+                
+                // Pagination controls update
+                document.getElementById('userCount').textContent = `${data.total} users`;
+                // If you have pagination elements with these IDs (recommended to add them if missing)
+                // document.getElementById('pageInfo').textContent = `Page ${data.current_page} of ${data.pages}`;
+                
+                renderUsers(users, data.total);
+            } catch (err) {
+                console.error("Error loading users:", err);
+                Swal.fire('Error', 'Failed to load users', 'error');
+            }
         }
-        
-        // Render users to table
-        function renderUsers(usersToRender) {
+
+        function renderUsers(usersToRender, totalCount) {
             const tbody = document.getElementById('usersTableBody');
             const emptyState = document.getElementById('emptyState');
-            const userCount = document.getElementById('userCount');
-            
-            userCount.textContent = `${usersToRender.length} users`;
             
             if (usersToRender.length === 0) {
                 tbody.innerHTML = '';
@@ -176,105 +201,123 @@
                     <td><strong>${user.username}</strong></td>
                     <td>${user.email}</td>
                     <td>
-                        <span class="badge badge-${user.role}">${capitalizeFirst(user.role)}</span>
+                        <span class="badge badge-${user.is_admin ? 'admin' : 'user'}">
+                            ${user.is_admin ? 'Admin' : 'User'}
+                        </span>
                     </td>
-                    <td>${user.totalGames || 0}</td>
-                    <td>${(user.bestScore || 0).toLocaleString()}</td>
-                    <td>${user.joinedDate}</td>
+                    <td>${user.games_played}</td>
+                    <td>${user.total_score || 0}</td>
+                    <td>${user.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}</td>
                     <td>
                         <div class="table-actions">
-                            ${user.role === 'user' 
-                                ? `<button class="action-btn" onclick="changeRole(${user.id}, 'admin')" title="Make Admin">👑</button>`
-                                : `<button class="action-btn" onclick="changeRole(${user.id}, 'user')" title="Remove Admin">👤</button>`
-                            }
-                            <button class="action-btn delete" onclick="deleteUser(${user.id})" title="Delete">🗑️</button>
+                            <button class="action-btn" onclick="changeRole(${user.id}, '${user.is_admin ? 'user' : 'admin'}', '${user.username}')" 
+                                title="${user.is_admin ? 'Revoke Admin' : 'Make Admin'}">
+                                ${user.is_admin ? '👤' : '👑'}
+                            </button>
+                            <button class="action-btn delete" onclick="deleteUser(${user.id}, '${user.username}')" title="Delete">🗑️</button>
                         </div>
                     </td>
                 </tr>
             `).join('');
         }
         
+        // Update statistics
+        function updateStats() {
+            const totalUsers = users.length;
+            const totalAdmins = users.filter(u => u.role === 'admin').length;
+            const totalGamesPlayed = users.reduce((sum, u) => sum + (u.totalGames || 0), 0);
+            
+            document.getElementById('totalUsers').textContent = totalUsers;
+            document.getElementById('totalAdmins').textContent = totalAdmins;
+            document.getElementById('totalGamesPlayed').textContent = totalGamesPlayed;
+        }
+        
         // Filter users
         function filterUsers() {
-            const role = document.getElementById('filterRole').value;
-            const search = document.getElementById('searchUser').value.toLowerCase();
-            
-            let filtered = users;
-            
-            if (role) {
-                filtered = filtered.filter(u => u.role === role);
-            }
-            
-            if (search) {
-                filtered = filtered.filter(u => 
-                    u.username.toLowerCase().includes(search) || 
-                    u.email.toLowerCase().includes(search)
-                );
-            }
-            
-            renderUsers(filtered);
+            currentPage = 1; // Reset to page 1 on new filter
+            loadUsers();
         }
         
         // Change role
-        function changeRole(userId, role) {
-            const user = users.find(u => u.id === userId);
-            if (!user) return;
+        function changeRole(id, newRole, username) {
+            changingRoleUserId = id;
+            changingRoleUserName = username;
             
-            changingRoleUserId = userId;
-            newRole = role;
-            
-            if (role === 'admin') {
+            if (newRole === 'admin') {
                 document.getElementById('roleModalTitle').textContent = '👑 Make Admin';
                 document.getElementById('roleModalMessage').innerHTML = `
-                    Make <strong>${user.username}</strong> an admin?<br>
+                    Make <strong>${username}</strong> an admin?<br>
                     <small style="color: #666;">They will have access to this admin panel.</small>
                 `;
             } else {
                 document.getElementById('roleModalTitle').textContent = '👤 Remove Admin';
                 document.getElementById('roleModalMessage').innerHTML = `
-                    Remove admin privileges from <strong>${user.username}</strong>?<br>
+                    Remove admin privileges from <strong>${username}</strong>?<br>
                     <small style="color: #666;">They will no longer have access to this admin panel.</small>
                 `;
             }
-            
             document.getElementById('roleModal').classList.add('show');
         }
         
         // Confirm role change
-        function confirmRoleChange() {
-            const index = users.findIndex(u => u.id === changingRoleUserId);
-            if (index !== -1) {
-                users[index].role = newRole;
-                localStorage.setItem('adminUsers', JSON.stringify(users));
+        async function confirmRoleChange() {
+            if (!changingRoleUserId) return;
+
+            try {
+                // Note: Your route is PUT /api/users/<id>/toggle-admin based on admin_bp.py
+                const res = await fetch(`/admin/api/users/${changingRoleUserId}/toggle-admin`, {
+                    method: 'PUT', // Changed to PUT to match your blueprint
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    Swal.fire('Success', data.message, 'success');
+                    closeRoleModal();
+                    loadUsers();
+                    loadStats(); // Update admin count stats
+                } else {
+                    Swal.fire('Error', data.error || 'Failed to change role', 'error');
+                    closeRoleModal();
+                }
+            } catch (err) {
+                Swal.fire('Error', 'API Error', 'error');
             }
-            
-            closeRoleModal();
-            loadUsers();
         }
-        
-        // Delete user
-        function deleteUser(userId) {
-            const user = users.find(u => u.id === userId);
-            if (!user) return;
-            
-            deletingUserId = userId;
-            document.getElementById('deleteUserName').textContent = user.username;
+
+        function deleteUser(id, username) {
+            deletingUserId = id;
+            document.getElementById('deleteUserName').textContent = username;
             document.getElementById('deleteModal').classList.add('show');
         }
-        
-        // Confirm delete
-        function confirmDelete() {
-            users = users.filter(u => u.id !== deletingUserId);
-            localStorage.setItem('adminUsers', JSON.stringify(users));
-            closeDeleteModal();
-            loadUsers();
+
+        async function confirmDelete() {
+            if (!deletingUserId) return;
+
+            try {
+                const res = await fetch(`/admin/api/users/${deletingUserId}`, {
+                    method: 'DELETE'
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    Swal.fire('Deleted!', data.message, 'success');
+                    closeDeleteModal();
+                    loadUsers();
+                    loadStats();
+                } else {
+                    Swal.fire('Error', data.error || 'Failed to delete user', 'error');
+                    closeDeleteModal();
+                }
+            } catch (err) {
+                Swal.fire('Error', 'API Error', 'error');
+            }
         }
-        
-        // Close modals
+
+        // --- MODAL UTILS ---
         function closeRoleModal() {
             document.getElementById('roleModal').classList.remove('show');
             changingRoleUserId = null;
-            newRole = null;
         }
         
         function closeDeleteModal() {
@@ -282,20 +325,16 @@
             deletingUserId = null;
         }
         
-        // Helper function
-        function capitalizeFirst(str) {
-            return str.charAt(0).toUpperCase() + str.slice(1);
-        }
-        
-        // Sidebar toggle for mobile
-        function initSidebarToggle() {
-            const toggle = document.getElementById('sidebarToggle');
-            const sidebar = document.getElementById('adminSidebar');
-            
-            toggle.addEventListener('click', () => {
-                sidebar.classList.toggle('active');
-                toggle.textContent = sidebar.classList.contains('active') ? '✕' : '☰';
+        document.querySelectorAll('.admin-modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.classList.remove('show');
             });
+        });
+
+        // Helper for capitalization
+        function capitalizeFirst(str) {
+            if (!str) return '';
+            return str.charAt(0).toUpperCase() + str.slice(1);
         }
         
         // Close modal on outside click
@@ -309,8 +348,9 @@
         
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
+            loadStats();
             loadUsers();
-            initSidebarToggle();
+            // initSidebarToggle(); // If defined in layout, this is fine
         });
     </script>
 {% endblock %}
