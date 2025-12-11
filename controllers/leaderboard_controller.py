@@ -69,6 +69,19 @@ def user_stats():
     total_score = db.session.query(func.sum(Score.score)) \
                         .filter(Score.user_id == user_id) \
                         .scalar() or 0
+    
+    score_subquery = db.session.query(
+        Score.user_id,
+        func.sum(Score.score).label('sum_score')
+    ).group_by(Score.user_id).subquery()
+
+    
+    higher_score_count = db.session.query(func.count(score_subquery.c.user_id)) \
+        .filter(score_subquery.c.sum_score > total_score) \
+        .scalar() or 0
+
+    rank = higher_score_count + 1
+
     # Best scores per level
     best_scores = {}
     for level in [1, 2, 3]:
@@ -86,6 +99,7 @@ def user_stats():
     return jsonify({
         'user_id': user_id,
         'username': user.username,
+        'rank': rank,
         'total_games': total_games,
         'completed_games': completed_games,
         'total_score': total_score,

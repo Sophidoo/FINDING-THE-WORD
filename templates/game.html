@@ -36,7 +36,7 @@
                 <div class="player-avatar-large">{{ current_user.username[0].upper() if current_user.is_authenticated else 'P' }}</div>
                 <div class="player-info-large">
                     <h3 id="playerUsername">{{ current_user.username if current_user.is_authenticated else 'Guest' }}</h3>
-                    <p class="player-rank-badge">Rank #<span id="playerRank">--</span></p>
+                    <p class="player-rank-badge">Rank #<span id="playerRank"></span></p>
                 </div>
             </div>
             <div class="stats-grid horizontal">
@@ -218,6 +218,7 @@
             document.getElementById('playerLogo').textContent = stats.username.trim().charAt(0).toUpperCase() || 'P';
             document.getElementById('totalGames').textContent = stats.total_games;
             document.getElementById('completedGames').textContent = stats.completed_games;
+            document.getElementById('playerRank').textContent = stats.rank;
 
             // Best score overall (from any level)
             const bestOverall = Math.max(
@@ -234,8 +235,6 @@
             document.getElementById('completionRatePercent').textContent = stats.completion_rate;
             document.getElementById('completionRateFill').style.width = completionRate + '%';
 
-            // Optional: Show rank (you can extend the API later if you want real rank)
-            document.getElementById('playerRank').textContent = '--'; // or calculate from leaderboard
 
         } catch (err) {
             console.error('Failed to load player stats:', err);
