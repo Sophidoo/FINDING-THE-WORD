@@ -16,7 +16,7 @@ def get_leaderboard():
     query = db.session.query(
         User.id.label('user_id'),
         User.username,
-        func.max(Score.score).label('best_score'),
+        func.sum(Score.score).label('total_score'),
         func.count(Score.id).label('total_games'),  # Or use GameSession if separate
         func.avg(Score.time_taken).label('avg_time')  # Assuming Score has 'time_taken' in seconds
     ).join(Score, Score.user_id == User.id)  # Join Score to User
@@ -26,7 +26,7 @@ def get_leaderboard():
 
     # Group by user, order by best_score DESC, limit
     top_users = query.group_by(User.id, User.username) \
-                     .order_by(desc('best_score')) \
+                     .order_by(desc('total_score')) \
                      .limit(limit) \
                      .all()
 
@@ -36,7 +36,7 @@ def get_leaderboard():
         leaderboard.append({
             'user_id': row.user_id,
             'username': row.username or 'Guest',
-            'score': row.best_score or 0,
+            'score': row.total_score or 0,
             'total_games': row.total_games or 0,
             'avg_time': row.avg_time or 0,  # In seconds; format in JS
             'is_current_user': current_user.is_authenticated and row.user_id == current_user.id
@@ -66,6 +66,9 @@ def user_stats():
     total_games = GameSession.query.filter_by(user_id=user_id).count()
     completed_games = GameSession.query.filter_by(user_id=user_id, is_completed=True).count()
 
+    total_score = db.session.query(func.sum(Score.score)) \
+                        .filter(Score.user_id == user_id) \
+                        .scalar() or 0
     # Best scores per level
     best_scores = {}
     for level in [1, 2, 3]:
@@ -85,6 +88,7 @@ def user_stats():
         'username': user.username,
         'total_games': total_games,
         'completed_games': completed_games,
+        'total_score': total_score,
         'best_scores': best_scores,
         'average_score': round(avg_score, 2),
         'completion_rate': f"{(completed_games / total_games) * 100:.1f}%" if total_games > 0 else "0%"

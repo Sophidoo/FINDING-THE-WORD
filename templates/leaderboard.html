@@ -26,7 +26,7 @@
                 <div class="leaderboard-row header">
                     <div class="rank">Rank</div>
                     <div class="player-name">Player</div>
-                    <div class="player-score">Best Score</div>
+                    <div class="player-score">Total Score</div>
                     <div class="player-games">Games</div>
                     <div class="player-time">Avg Time</div>
                 </div>
@@ -149,8 +149,8 @@
             row.innerHTML = `
                 <div class="rank">--</div>
                 <div class="player-name">${stats.username} <span style="color:#00d4ff;font-weight:bold">(You)</span></div>
-                <div class="player-score">${(stats.best_scores && Object.values(stats.best_scores).length > 0
-                    ? Math.max(...Object.values(stats.best_scores).map(s => s.score || 0))
+                <div class="player-score">${(stats.total_score && Object.values(stats.total_score).length > 0
+                    ? Math.max(...Object.values(stats.total_score).map(s => s.score || 0))
                     : 0).toLocaleString()}</div>
                 <div class="player-games">${stats.total_games || 0}</div>
                 <div class="player-time">--:--</div>

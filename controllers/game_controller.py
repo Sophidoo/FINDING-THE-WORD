@@ -74,10 +74,10 @@ def validate_word():
         db.session.commit()
 
         game_session.calculate_score()
-        new_achievements = check_and_unlock_achievements(current_user)
+        new_achievements = check_and_unlock_achievements(current_user, game_session)
         print(game_session.score)
         print("score", game_session.calculate_score())
-        
+
     return jsonify({
         'valid': is_valid,
         'already_found': already_found,
@@ -131,7 +131,7 @@ def end_game():
 
     game_session.end_game()  # calls the method
     db.session.commit()
-    new_achievements = check_and_unlock_achievements(current_user)
+    new_achievements = check_and_unlock_achievements(current_user, game_session)
 
 
     return jsonify({
