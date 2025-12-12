@@ -27,6 +27,146 @@
   transform: translateX(-5px);
 }
 
+/* ===== LEADERBOARD HEADER MOBILE STYLES ===== */
+@media (max-width: 768px) {
+  .leaderboard-container .dashboard-header {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 1rem;
+    gap: 1rem;
+  }
+  
+  .leaderboard-container .dashboard-logo {
+    justify-content: center;
+    order: 1;
+  }
+  
+  .leaderboard-container .header-actions {
+    order: 2;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 0.75rem;
+  }
+  
+  .leaderboard-container .back-to-dashboard-btn {
+    flex: 1;
+    text-align: center;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.75rem;
+  }
+  
+  .leaderboard-container .user-info {
+    padding: 0.4rem 0.75rem;
+  }
+  
+  .leaderboard-container .user-name {
+    font-size: 0.8rem;
+  }
+  
+  .leaderboard-container .user-avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .leaderboard-container .dashboard-title {
+    font-size: 1rem;
+  }
+  
+  .leaderboard-container .logo-box {
+    width: 38px;
+    height: 38px;
+    font-size: 1.2rem;
+  }
+  
+  .leaderboard-container .back-to-dashboard-btn {
+    font-size: 0.7rem;
+    padding: 0.5rem 0.5rem;
+  }
+}
+
+/* ===== PAGINATION CONTROLS ===== */
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+  padding: 1rem 0;
+  flex-wrap: wrap;
+}
+
+.pagination-btn {
+  padding: 0.75rem 1.5rem;
+  background: #ffffff;
+  border: 2px solid #000000;
+  color: #000000;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  font-family: inherit;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #000000;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 3px 3px 0px #22c55e;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: #e0e0e0;
+  border-color: #999;
+  color: #666;
+}
+
+.pagination-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  font-weight: 600;
+  color: #000000;
+}
+
+.pagination-info strong {
+  font-weight: 900;
+  color: #22c55e;
+}
+
+.pagination-entries {
+  font-size: 0.8rem;
+  color: #666;
+  font-weight: 500;
+}
+
+/* Pagination Mobile Styles */
+@media (max-width: 480px) {
+  .pagination-controls {
+    gap: 0.75rem;
+    padding: 0.75rem 0;
+  }
+  
+  .pagination-btn {
+    padding: 0.6rem 1rem;
+    font-size: 0.75rem;
+  }
+  
+  .pagination-info {
+    order: -1;
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+}
+
 /* Achievements Section */
 .achievements-section {
   background: #ffffff;
@@ -290,6 +430,52 @@
   color: #000000;
 }
 
+/* Leaderboard Table Scroll Wrapper - for mobile horizontal scrolling */
+.leaderboard-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  scrollbar-width: thin;
+  scrollbar-color: #22c55e #e0e0e0;
+}
+
+/* Custom scrollbar styling for webkit browsers */
+.leaderboard-table-wrapper::-webkit-scrollbar {
+  height: 8px;
+}
+
+.leaderboard-table-wrapper::-webkit-scrollbar-track {
+  background: #e0e0e0;
+  border-radius: 4px;
+}
+
+.leaderboard-table-wrapper::-webkit-scrollbar-thumb {
+  background: #22c55e;
+  border-radius: 4px;
+}
+
+.leaderboard-table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #16a34a;
+}
+
+/* Scroll hint indicator for mobile */
+.scroll-hint {
+  display: none;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #666;
+  padding: 0.5rem 0;
+  font-weight: 600;
+}
+
+.scroll-hint::before {
+  content: '👉 ';
+}
+
+.scroll-hint::after {
+  content: ' 👈';
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
   .achievements-grid {
@@ -325,20 +511,28 @@
     align-self: center;
   }
   
+  /* Make leaderboard table scrollable on mobile */
+  .full-leaderboard-section .leaderboard-table {
+    min-width: 550px; /* Ensure table has minimum width for scrolling */
+  }
+  
   .full-leaderboard-section .leaderboard-row {
-    grid-template-columns: 60px 1fr 100px;
+    grid-template-columns: 60px 1fr 100px 80px 80px;
     padding: 0.75rem 1rem;
     font-size: 0.85rem;
+    min-width: 550px;
   }
   
+  /* Show the scroll hint on mobile */
+  .scroll-hint {
+    display: block;
+  }
+  
+  /* Keep all columns visible - don't hide them anymore */
   .full-leaderboard-section .player-games,
   .full-leaderboard-section .player-time {
-    display: none;
-  }
-  
-  .full-leaderboard-section .leaderboard-row.header .player-games,
-  .full-leaderboard-section .leaderboard-row.header .player-time {
-    display: none;
+    display: block;
+    font-size: 0.8rem;
   }
 }
 
@@ -365,5 +559,17 @@
   .back-to-dashboard-btn {
     font-size: 0.85rem;
     padding: 0.6rem 1.2rem;
+  }
+  
+  /* Extra small screens - slightly smaller font */
+  .full-leaderboard-section .leaderboard-row {
+    font-size: 0.8rem;
+    padding: 0.65rem 0.75rem;
+    grid-template-columns: 50px 1fr 80px 70px 70px;
+    min-width: 480px;
+  }
+  
+  .full-leaderboard-section .leaderboard-table {
+    min-width: 480px;
   }
 }

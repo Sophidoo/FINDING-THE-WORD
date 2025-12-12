@@ -22,6 +22,8 @@
         <!-- Leaderboard Section -->
         <section class="full-leaderboard-section">
             <h2>📊 LEADERBOARD</h2>
+            <div class="scroll-hint">Scroll to see more</div>
+            <div class="leaderboard-table-wrapper">
             <div class="leaderboard-table">
                 <div class="leaderboard-row header">
                     <div class="rank">Rank</div>
@@ -47,6 +49,21 @@
                     <div class="player-games" id="currentPlayerGames">0</div>
                     <div class="player-time" id="currentPlayerTime">--:--</div>
                 </div>
+            </div>
+            </div><!-- End of leaderboard-table-wrapper -->
+            
+            <!-- Pagination Controls -->
+            <div class="pagination-controls">
+                <button class="pagination-btn" id="prevPageBtn" onclick="changePage(-1)" disabled>
+                    ← Previous
+                </button>
+                <div class="pagination-info">
+                    <span>Page <strong id="currentPageNum">1</strong> of <strong id="totalPagesNum">1</strong></span>
+                    <span class="pagination-entries">(<span id="showingStart">0</span>-<span id="showingEnd">0</span> of <span id="totalEntries">0</span>)</span>
+                </div>
+                <button class="pagination-btn" id="nextPageBtn" onclick="changePage(1)" disabled>
+                    Next →
+                </button>
             </div>
         </section>
     </div>
@@ -96,41 +113,31 @@
             return `${mins}:${secs.toString().padStart(2, '0')}`;
         }
 
+        // ===== PAGINATION STATE =====
+        let allLeaderboardData = [];
+        let currentPage = 1;
+        const ITEMS_PER_PAGE = 10;
+        let totalPages = 1;
+        let headerRowRef = null; // Store header reference
+
         async function loadLeaderboard() {
             try {
                 const data = await apiCall('/api/leaderboard/leaderboard?limit=50'); // Get top 50
-                const leaderboard = data.leaderboard || [];
-
+                allLeaderboardData = data.leaderboard || [];
+                
                 const tableBody = document.querySelector('.leaderboard-table');
-                const headerRow = tableBody.querySelector('.leaderboard-row.header');
-
-                // Clear old rows (keep header)
-                tableBody.innerHTML = '';
-                tableBody.appendChild(headerRow);
-
-                // Add all players
-                leaderboard.forEach((entry, index) => {
-                    const rank = index + 1;
-                    const isTop3 = rank <= 3;
-                    const medalClass = rank === 1 ? 'medal-gold' : rank === 2 ? 'medal-silver' : rank === 3 ? 'medal-bronze' : '';
-
-                    const row = document.createElement('div');
-                    row.className = `leaderboard-row ${entry.is_current_user ? 'current-player' : ''}`;
-                    row.innerHTML = `
-                        <div class="rank ${isTop3 ? 'top ' + medalClass : ''}">${rank}</div>
-                        <div class="player-name">
-                            ${entry.username}
-                            ${entry.is_current_user ? ' <span style="color:#00d4ff;font-weight:bold">(You)</span>' : ''}
-                        </div>
-                        <div class="player-score">${entry.score.toLocaleString()}</div>
-                        <div class="player-games">${entry.games_played || entry.total_games || 0}</div>
-                        <div class="player-time">${formatTime(entry.avg_time || entry.average_time)}</div>
-                    `;
-                    tableBody.appendChild(row);
-                });
-
-                // If current user is not in top 50, still show them at the bottom
-                if (!leaderboard.some(p => p.is_current_user)) {
+                headerRowRef = tableBody.querySelector('.leaderboard-row.header').cloneNode(true);
+                
+                // Calculate total pages
+                totalPages = Math.ceil(allLeaderboardData.length / ITEMS_PER_PAGE);
+                if (totalPages === 0) totalPages = 1;
+                
+                // Reset to page 1 and render
+                currentPage = 1;
+                renderPage();
+                
+                // If current user is not in the data, show them separately
+                if (!allLeaderboardData.some(p => p.is_current_user)) {
                     await showCurrentPlayerOutsideTop();
                 }
 
@@ -138,6 +145,80 @@
                 console.error('Failed to load leaderboard:', err);
                 showNotification('Failed to load leaderboard');
             }
+        }
+
+        function renderPage() {
+            const tableBody = document.querySelector('.leaderboard-table');
+            
+            // Clear table and re-add header
+            tableBody.innerHTML = '';
+            tableBody.appendChild(headerRowRef.cloneNode(true));
+            
+            // Calculate slice for current page
+            const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+            const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, allLeaderboardData.length);
+            const pageData = allLeaderboardData.slice(startIndex, endIndex);
+            
+            // Render rows for this page
+            pageData.forEach((entry, pageIndex) => {
+                const rank = startIndex + pageIndex + 1; // Overall rank
+                const isTop3 = rank <= 3;
+                const medalClass = rank === 1 ? 'medal-gold' : rank === 2 ? 'medal-silver' : rank === 3 ? 'medal-bronze' : '';
+
+                const row = document.createElement('div');
+                row.className = `leaderboard-row ${entry.is_current_user ? 'current-player' : ''}`;
+                row.innerHTML = `
+                    <div class="rank ${isTop3 ? 'top ' + medalClass : ''}">${rank}</div>
+                    <div class="player-name">
+                        ${entry.username}
+                        ${entry.is_current_user ? ' <span style="color:#00d4ff;font-weight:bold">(You)</span>' : ''}
+                    </div>
+                    <div class="player-score">${entry.score.toLocaleString()}</div>
+                    <div class="player-games">${entry.games_played || entry.total_games || 0}</div>
+                    <div class="player-time">${formatTime(entry.avg_time || entry.average_time)}</div>
+                `;
+                tableBody.appendChild(row);
+            });
+            
+            // Update pagination UI
+            updatePaginationUI(startIndex + 1, endIndex);
+        }
+
+        function changePage(direction) {
+            const newPage = currentPage + direction;
+            if (newPage >= 1 && newPage <= totalPages) {
+                currentPage = newPage;
+                renderPage();
+                
+                // Scroll to top of leaderboard section
+                document.querySelector('.full-leaderboard-section').scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start' 
+                });
+            }
+        }
+
+        function updatePaginationUI(showStart, showEnd) {
+            const prevBtn = document.getElementById('prevPageBtn');
+            const nextBtn = document.getElementById('nextPageBtn');
+            const currentPageNum = document.getElementById('currentPageNum');
+            const totalPagesNum = document.getElementById('totalPagesNum');
+            const showingStartEl = document.getElementById('showingStart');
+            const showingEndEl = document.getElementById('showingEnd');
+            const totalEntriesEl = document.getElementById('totalEntries');
+            
+            // Update page numbers
+            currentPageNum.textContent = currentPage;
+            totalPagesNum.textContent = totalPages;
+            
+            // Update entries info
+            showingStartEl.textContent = allLeaderboardData.length > 0 ? showStart : 0;
+            showingEndEl.textContent = showEnd;
+            totalEntriesEl.textContent = allLeaderboardData.length;
+            
+            // Enable/disable buttons
+            prevBtn.disabled = currentPage <= 1;
+            nextBtn.disabled = currentPage >= totalPages;
         }
 
         async function showCurrentPlayerOutsideTop() {
